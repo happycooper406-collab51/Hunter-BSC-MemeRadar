@@ -752,39 +752,38 @@ def api_analyze():
     session_id = create_analysis_session()
     
     try:
-    data = request.json
-    api_key = data.get("api_key", "").strip()
-    token_address = data.get("token_address", "").strip()
-    
-    # 新增：支援時間區間
-    start_minutes = int(data.get("start_minutes", 0))
-    start_seconds = int(data.get("start_seconds", 0))
-    end_minutes = int(data.get("end_minutes", 0))
-    end_seconds = int(data.get("end_seconds", 0))
-    
-    max_txs = int(data.get("max_txs", 100))  # 機器人閾值，預設 100
-    
-    # 計算總秒數
-    start_total_seconds = (start_minutes * 60) + start_seconds
-    end_total_seconds = (end_minutes * 60) + end_seconds
-    
-    # 驗證
-    if end_total_seconds <= 0:
-        return jsonify({"success": False, "error": "結束時間必須大於 0"})
-    
-    if start_total_seconds >= end_total_seconds:
-        return jsonify({"success": False, "error": "起始時間必須小於結束時間"})
-    
-    if not api_key:
-        return jsonify({"success": False, "error": "需要 Etherscan API Key"})
-    
-    if not token_address or not token_address.startswith("0x") or len(token_address) != 42:
-        return jsonify({"success": False, "error": "無效的合約地址格式"})
-    
-    if max_txs < 0:
-        return jsonify({"success": False, "error": "機器人閾值必須 >= 0"})
-    
-    try:
+        data = request.json
+        api_key = data.get("api_key", "").strip()
+        token_address = data.get("token_address", "").strip()
+        
+        # 新增：支援時間區間
+        start_minutes = int(data.get("start_minutes", 0))
+        start_seconds = int(data.get("start_seconds", 0))
+        end_minutes = int(data.get("end_minutes", 0))
+        end_seconds = int(data.get("end_seconds", 0))
+        
+        max_txs = int(data.get("max_txs", 100))  # 機器人閾值，預設 100
+        
+        # 計算總秒數
+        start_total_seconds = (start_minutes * 60) + start_seconds
+        end_total_seconds = (end_minutes * 60) + end_seconds
+        
+        # 驗證
+        if end_total_seconds <= 0:
+            return jsonify({"success": False, "error": "結束時間必須大於 0"})
+        
+        if start_total_seconds >= end_total_seconds:
+            return jsonify({"success": False, "error": "起始時間必須小於結束時間"})
+        
+        if not api_key:
+            return jsonify({"success": False, "error": "需要 Etherscan API Key"})
+        
+        if not token_address or not token_address.startswith("0x") or len(token_address) != 42:
+            return jsonify({"success": False, "error": "無效的合約地址格式"})
+        
+        if max_txs < 0:
+            return jsonify({"success": False, "error": "機器人閾值必須 >= 0"})
+        
         result = analyzer.analyze_token(api_key, token_address, start_total_seconds, end_total_seconds, max_txs)
         # 標記會話完成
         complete_session(session_id, 'completed')
