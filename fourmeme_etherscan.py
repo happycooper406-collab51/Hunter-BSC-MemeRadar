@@ -728,20 +728,21 @@ def export_csv():
             buyer['buy_count'],
             buyer['sell_count']
         ])
-    
-    output.seek(0)
+        
+output.seek(0)
     
     # 獲取內容並轉換為 UTF-8 with BOM
     csv_content = output.getvalue()
     
-    return Response(
+    # 使用 bytes 回應，避免 latin-1 編碼錯誤
+    response = Response(
         csv_content.encode('utf-8-sig'),
-        mimetype="text/csv; charset=utf-8",
-        headers={
-            "Content-Disposition": f"attachment;filename=early_buyers_{token_info.get('symbol', 'token')}.csv",
-            "Content-Type": "text/csv; charset=utf-8"
-        }
+        mimetype="text/csv; charset=utf-8"
     )
+    response.headers["Content-Disposition"] = f"attachment;filename=early_buyers_{token_info.get('symbol', 'token')}.csv"
+    response.headers["Content-Type"] = "text/csv; charset=utf-8"
+    
+    return response)
 
 
 if __name__ == "__main__":
