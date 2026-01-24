@@ -1195,18 +1195,39 @@
             document.getElementById('heroPage').style.display = 'none';
             document.getElementById('resultsPage').classList.add('active');
 
+            // 安全檢查
+            if (!result || !result.buyers || !Array.isArray(result.buyers)) {
+                console.error('❌ 結果格式錯誤');
+                document.getElementById('tokenInfo').textContent = `Token: ${tokenAddress.substring(0, 10)}...`;
+                document.getElementById('totalTx').textContent = '0';
+                document.getElementById('maxProfit').textContent = '×0';
+                document.getElementById('robots').textContent = '0';
+                document.getElementById('timeRange').textContent = `${startTime}-${endTime}s`;
+                
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 40px;">數據格式錯誤</td></tr>';
+                return;
+            }
+
             // 填充統計數據
             document.getElementById('tokenInfo').textContent = `Token: ${tokenAddress.substring(0, 10)}...`;
             document.getElementById('totalTx').textContent = result.buyers.length || '0';
             
-            // 最高利潤
-            const maxProfit = result.buyers && result.buyers.length > 0 ? 
-                Math.max(...result.buyers.map(b => b.profit_multiple || 0)).toFixed(1) : '0';
-            document.getElementById('maxProfit').textContent = `×${maxProfit}`;
+            // 最高利潤 - 安全計算
+            let maxProfit = 0;
+            if (result.buyers.length > 0) {
+                const profits = result.buyers
+                    .map(b => Number(b.profit_multiple) || 0)
+                    .filter(p => !isNaN(p) && isFinite(p));
+                
+                if (profits.length > 0) {
+                    maxProfit = Math.max(...profits);
+                }
+            }
+            document.getElementById('maxProfit').textContent = `×${maxProfit.toFixed(1)}`;
             
             // 機器人數量
-            const robotCount = result.buyers ? 
-                result.buyers.filter(b => b.is_likely_bot).length : 0;
+            const robotCount = result.buyers.filter(b => b.is_likely_bot).length;
             document.getElementById('robots').textContent = robotCount;
             
             // 時間區間
@@ -1251,10 +1272,10 @@
             }
 
             tbody.innerHTML = data.buyers.map((buyer, index) => {
-                // 安全檢查
-                const buyBnb = buyer.total_buy_bnb || 0;
-                const sellBnb = buyer.total_sell_bnb || 0;
-                const profit = buyer.profit_multiple || 0;
+                // 安全檢查和數值轉換
+                const buyBnb = Number(buyer.total_buy_bnb) || 0;
+                const sellBnb = Number(buyer.total_sell_bnb) || 0;
+                const profit = Number(buyer.profit_multiple) || 0;
                 const address = buyer.address || '未知';
                 const isBot = buyer.is_likely_bot || false;
                 
@@ -1262,7 +1283,7 @@
                 <tr>
                     <td><span class="rank-badge">${index + 1}</span></td>
                     <td class="address-cell" onclick="window.open('https://bscscan.com/address/${address}', '_blank')">
-                        ${address.substring(0, 6)}...${address.substring(38)}
+                        ${address.length >= 42 ? address.substring(0, 6) + '...' + address.substring(38) : address}
                     </td>
                     <td>${buyBnb.toFixed(4)}</td>
                     <td>${sellBnb.toFixed(4)}</td>
