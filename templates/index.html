@@ -1122,6 +1122,9 @@
             }
 
             showLoading();
+            
+            // 重置進度
+            resetProgress();
 
             fetch('/api/analyze', {
                 method: 'POST',
@@ -1140,7 +1143,15 @@
             })
             .then(response => response.json())
             .then(data => {
+                // 獲取 session_id 並開始輪詢進度
+                if (data.session_id) {
+                    console.log('Session ID:', data.session_id);
+                    startProgressPolling(data.session_id);
+                }
+                
                 hideLoading();
+                stopProgressPolling();
+                
                 if (data.success) {
                     currentResults = data;
                     displayResults(data);
@@ -1149,6 +1160,7 @@
                 }
             })
             .catch(error => {
+                stopProgressPolling();
                 hideLoading();
                 showError('請求失敗: ' + error.message);
             });
