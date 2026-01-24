@@ -598,6 +598,24 @@
             letter-spacing: 1px;
             font-weight: 600;
             border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.3s;
+        }
+
+        th:hover {
+            color: var(--primary);
+        }
+
+        .sort-indicator {
+            margin-left: 8px;
+            opacity: 0.5;
+            font-size: 0.8em;
+        }
+
+        .sort-indicator.active {
+            opacity: 1;
+            color: var(--primary);
         }
 
         td {
@@ -641,6 +659,20 @@
 
         .status-active {
             color: var(--success);
+        }
+
+        .status-bot {
+            color: #94a3b8;
+            opacity: 0.6;
+        }
+
+        .status-holding {
+            color: #10b981;
+            font-weight: 500;
+        }
+
+        .status-sold {
+            color: #60a5fa;
         }
 
         /* Loading */
@@ -811,7 +843,7 @@
                 <div class="nav-links">
                     <a href="https://x.com/0x515151" target="_blank">🐦 Twitter</a>
                     <button class="donate-badge" onclick="copyDonateAddress()">💝 打賞</button>
-                    <span class="version-badge">v2.0.2</span>
+                    <span class="version-badge">v2.0.3</span>
                 </div>
             </div>
 
@@ -958,17 +990,20 @@
             <!-- Table -->
             <div class="table-section">
                 <div class="table-header">
-                    <h2>早期買家排行榜</h2>
+                    <div>
+                        <h2>早期買家排行榜</h2>
+                        <div id="tokenName" style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 8px;"></div>
+                    </div>
                     <button class="export-btn" onclick="exportCSV()">📥 匯出 CSV</button>
                 </div>
                 <table>
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>地址</th>
-                            <th>BNB 利潤</th>
-                            <th>總利潤 (USD)</th>
-                            <th>倍數</th>
+                            <th onclick="sortTable('address')">地址 <span class="sort-indicator" id="sort-address"></span></th>
+                            <th onclick="sortTable('bnb')">BNB 利潤 <span class="sort-indicator" id="sort-bnb"></span></th>
+                            <th onclick="sortTable('usd')">總利潤 (USD) <span class="sort-indicator" id="sort-usd"></span></th>
+                            <th onclick="sortTable('multiple')">倍數 <span class="sort-indicator" id="sort-multiple"></span></th>
                             <th>狀態</th>
                         </tr>
                     </thead>
@@ -984,7 +1019,7 @@
                     <div class="footer-social">
                         <a href="https://x.com/0x515151" target="_blank" class="social-link">🐦 Twitter</a>
                         <a href="#" class="social-link">📄 Docs</a>
-                        <a href="#" class="social-link">v2.0.2</a>
+                        <a href="#" class="social-link">v2.0.3</a>
                     </div>
                     
                     <div class="footer-info">
@@ -1213,6 +1248,15 @@
             document.getElementById('tokenInfo').textContent = `Token: ${tokenAddress.substring(0, 10)}...`;
             document.getElementById('totalTx').textContent = result.buyers.length || '0';
             
+            // Token 名稱顯示
+            if (result.token_info) {
+                const tokenName = result.token_info.name || '';
+                const tokenSymbol = result.token_info.symbol || '';
+                if (tokenName && tokenSymbol) {
+                    document.getElementById('tokenName').textContent = `📊 ${tokenName} (${tokenSymbol})`;
+                }
+            }
+            
             // 最高利潤 - 安全計算
             let maxProfit = 0;
             if (result.buyers.length > 0) {
@@ -1277,7 +1321,23 @@
                 const usdProfit = Number(buyer.total_profit_usd) || 0;
                 const profit = Number(buyer.profit_multiple) || 0;
                 const address = buyer.address || '未知';
+                const isBot = buyer.is_bot || false;
                 const status = buyer.status || '未知';
+                
+                // 判斷顯示狀態
+                let displayStatus = status;
+                let statusClass = '';
+                
+                if (isBot) {
+                    displayStatus = '🤖 機器人';
+                    statusClass = 'status-bot';
+                } else if (status === '仍持倉') {
+                    displayStatus = '✓ 持倉中';
+                    statusClass = 'status-holding';
+                } else if (status === '已清倉') {
+                    displayStatus = '◎ 已清倉';
+                    statusClass = 'status-sold';
+                }
                 
                 return `
                 <tr>
@@ -1288,7 +1348,7 @@
                     <td>${bnbProfit.toFixed(4)} BNB</td>
                     <td>$${usdProfit.toFixed(2)}</td>
                     <td class="profit-positive">×${profit.toFixed(2)}</td>
-                    <td class="${status === '仍持倉' ? 'status-active' : ''}">${status}</td>
+                    <td class="${statusClass}">${displayStatus}</td>
                 </tr>
                 `;
             }).join('');
@@ -1323,6 +1383,71 @@
 
         // 全局變數存儲當前分析結果
         let currentAnalysisData = null;
+        let sortColumn = null;
+        let sortDirection = 'desc'; // 'asc' or 'desc'
+
+        // 排序表格
+        function sortTable(column) {
+            if (!currentAnalysisData || !currentAnalysisData.buyers) return;
+            
+            // 切換排序方向
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'desc';
+            }
+            
+            // 排序數據
+            const sortedBuyers = [...currentAnalysisData.buyers].sort((a, b) => {
+                let aVal, bVal;
+                
+                switch(column) {
+                    case 'address':
+                        aVal = a.address || '';
+                        bVal = b.address || '';
+                        return sortDirection === 'asc' ? 
+                            aVal.localeCompare(bVal) : 
+                            bVal.localeCompare(aVal);
+                    
+                    case 'bnb':
+                        aVal = Number(a.bnb_profit) || 0;
+                        bVal = Number(b.bnb_profit) || 0;
+                        break;
+                    
+                    case 'usd':
+                        aVal = Number(a.total_profit_usd) || 0;
+                        bVal = Number(b.total_profit_usd) || 0;
+                        break;
+                    
+                    case 'multiple':
+                        aVal = Number(a.profit_multiple) || 0;
+                        bVal = Number(b.profit_multiple) || 0;
+                        break;
+                    
+                    default:
+                        return 0;
+                }
+                
+                return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+            });
+            
+            // 更新排序指示器
+            document.querySelectorAll('.sort-indicator').forEach(el => {
+                el.textContent = '';
+                el.classList.remove('active');
+            });
+            
+            const indicator = document.getElementById(`sort-${column}`);
+            if (indicator) {
+                indicator.textContent = sortDirection === 'asc' ? '↑' : '↓';
+                indicator.classList.add('active');
+            }
+            
+            // 重新渲染表格
+            currentAnalysisData.buyers = sortedBuyers;
+            displayResults(currentAnalysisData);
+        }
 
         // 匯出 CSV
         function exportCSV() {
