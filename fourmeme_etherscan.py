@@ -87,12 +87,14 @@ def cleanup_old_sessions():
         for session_id in to_delete:
             del all_analysis_sessions[session_id]
 
-def complete_session(session_id, status='completed'):
-    """標記會話為完成或錯誤"""
+def complete_session(session_id, status='completed', result=None):
+    """標記會話為完成或錯誤，並可選存儲結果"""
     with sessions_lock:
         if session_id in all_analysis_sessions:
             all_analysis_sessions[session_id]['status'] = status
             all_analysis_sessions[session_id]['progress'] = 100
+            if result:
+                all_analysis_sessions[session_id]['result'] = result
 # ==================== 進度追蹤結束 ====================
 
 # 排除的系統地址
@@ -813,13 +815,32 @@ def api_analyze():
         if max_txs < 0:
             return jsonify({"success": False, "error": "機器人閾值必須 >= 0"})
         
-        result = analyzer.analyze_token(api_key, token_address, start_total_seconds, end_total_seconds, max_txs, session_id=session_id)
-        # 標記會話完成
-        complete_session(session_id, 'completed')
+        # 立即返回 session_id，在背景執行分析
+        import threading
         
-        # 返回結果時包含 session_id
-        result['session_id'] = session_id
-        return jsonify(result)
+        def run_analysis():
+            try:
+                result = analyzer.analyze_token(api_key, token_address, start_total_seconds, end_total_seconds, max_txs, session_id=session_id)
+                # 標記會話完成，並存儲結果
+                complete_session(session_id, 'completed', result=result)
+            except Exception as e:
+                # 標記會話為錯誤
+                complete_session(session_id, 'error')
+                import traceback
+                traceback.print_exc()
+        
+        # 在新線程中執行分析
+        thread = threading.Thread(target=run_analysis)
+        thread.daemon = True
+        thread.start()
+        
+        # 立即返回 session_id
+        return jsonify({
+            "success": True,
+            "session_id": session_id,
+            "status": "processing",
+            "message": "分析已開始，請等待..."
+        })
     except Exception as e:
         # 標記會話為錯誤
         complete_session(session_id, 'error')
