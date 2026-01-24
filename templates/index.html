@@ -1081,30 +1081,42 @@
             .then(response => response.json())
             .then(data => {
                 console.log('📊 API 完整回應:', data);
+                console.log('📊 data.success:', data.success);
+                console.log('📊 data.buyers:', data.buyers);
+                console.log('📊 data.buyers 類型:', typeof data.buyers);
+                console.log('📊 data.buyers 是陣列?', Array.isArray(data.buyers));
+                
                 stopFakeProgress();
                 
                 if (!data.success) {
+                    console.error('❌ API 返回失敗:', data.error);
                     alert('分析失敗: ' + (data.error || '未知錯誤'));
                     document.getElementById('loading').classList.remove('active');
                     return;
                 }
 
-                // 檢查是否有數據
-                if (!data.buyers || !Array.isArray(data.buyers)) {
-                    console.error('❌ 數據格式錯誤:', data);
-                    alert('分析完成但無數據，請檢查 Console');
-                    document.getElementById('loading').classList.remove('active');
+                // 隱藏 loading
+                document.getElementById('loading').classList.remove('active');
+                
+                // 切換到結果頁（即使沒數據也顯示）
+                document.getElementById('heroPage').style.display = 'none';
+                document.getElementById('resultsPage').classList.add('active');
+
+                // 檢查數據
+                if (!data.buyers || !Array.isArray(data.buyers) || data.buyers.length === 0) {
+                    console.warn('⚠️ 無買家數據');
+                    document.getElementById('tokenInfo').textContent = `Token: ${address.substring(0, 10)}...`;
+                    document.getElementById('totalTx').textContent = '0';
+                    document.getElementById('maxProfit').textContent = '×0';
+                    document.getElementById('robots').textContent = '0';
+                    document.getElementById('timeRange').textContent = `${startTime}-${endTime}s`;
+                    
+                    const tbody = document.getElementById('tableBody');
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 40px;">無數據 - 可能該時間區間內沒有交易</td></tr>';
                     return;
                 }
 
                 console.log(`✅ 找到 ${data.buyers.length} 個買家`);
-
-                // 隱藏 loading
-                document.getElementById('loading').classList.remove('active');
-                
-                // 切換到結果頁
-                document.getElementById('heroPage').style.display = 'none';
-                document.getElementById('resultsPage').classList.add('active');
 
                 // 填充統計數據
                 document.getElementById('tokenInfo').textContent = `Token: ${address.substring(0, 10)}...`;
