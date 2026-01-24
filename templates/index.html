@@ -668,6 +668,49 @@
             <div class="loading" id="loading">
                 <div class="spinner"></div>
                 <p>正在分析中，請稍候...</p>
+                
+                <!-- 進度顯示區域 -->
+                <div class="progress-info" style="margin-top: 20px;">
+                    <div id="progressStage" style="font-size: 1.1em; font-weight: 600; color: #6C8EAD; margin-bottom: 10px;">
+                        正在分析中...
+                    </div>
+                    
+                    <div id="progressMessage" style="color: #666; margin-bottom: 15px;">
+                        請稍候...
+                    </div>
+                    
+                    <!-- 交易筆數統計 -->
+                    <div id="analysisStats" style="display: none; margin-bottom: 15px; padding: 10px; background: #f0f4f8; border-radius: 8px;">
+                        <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                            <div>
+                                <span style="color: #666;">🔍 偵測交易：</span>
+                                <strong id="totalTransactions" style="color: #6C8EAD;">- 筆</strong>
+                            </div>
+                            <div>
+                                <span style="color: #666;">⏱️ 預估時間：</span>
+                                <strong id="estimatedDuration" style="color: #6C8EAD;">- 分鐘</strong>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 進度條 -->
+                    <div style="margin-bottom: 10px;">
+                        <div style="width: 100%; height: 30px; background: #e0e0e0; border-radius: 15px; overflow: hidden; position: relative;">
+                            <div id="progressBarFill" style="height: 100%; background: linear-gradient(90deg, #6C8EAD, #8B7AA3); width: 0%; transition: width 0.3s ease; display: flex; align-items: center; justify-content: center;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="progressPercent" style="text-align: center; font-weight: 600; color: #6C8EAD; margin-bottom: 5px;">
+                        當前進度：0%
+                    </div>
+                    
+                    <div id="progressDetail" style="text-align: center; color: #666; font-size: 0.9em;">
+                    </div>
+                    
+                    <div id="estimatedTime" style="text-align: center; color: #6C8EAD; font-size: 0.9em; margin-top: 5px;">
+                    </div>
+                </div>
             </div>
 
             <div class="error-message" id="errorMessage"></div>
