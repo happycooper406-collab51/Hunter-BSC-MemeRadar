@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Four.meme 早期買家分析器</title>
     <style>
+        /* CSS 變數 */
+        :root {
+            --primary-color: #6C8EAD;
+            --secondary-color: #A08EBC;
+            --accent-color: #8B7AA3;
+            --success-color: #4CAF50;
+            --warning-color: #FF9800;
+            --danger-color: #F44336;
+            --bg-dark: #000000;
+            --card-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            --card-shadow-hover: 0 12px 32px rgba(0,0,0,0.18);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -168,8 +181,14 @@
             background: white;
             border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            box-shadow: var(--card-shadow);
             margin-bottom: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--card-shadow-hover);
         }
 
         .input-section {
@@ -228,22 +247,43 @@
 
         .analyze-btn {
             width: 100%;
-            padding: 16px;
-            background: #6C8EAD;
+            padding: 18px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 1.1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
             margin-top: 10px;
+            box-shadow: 0 4px 12px rgba(108, 142, 173, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .analyze-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .analyze-btn:hover::before {
+            left: 100%;
         }
 
         .analyze-btn:hover {
-            background: #5A7A95;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(108, 142, 173, 0.3);
+            box-shadow: 0 8px 20px rgba(108, 142, 173, 0.4);
+        }
+
+        .analyze-btn:active {
+            transform: translateY(0);
         }
 
         .analyze-btn:disabled {
@@ -262,6 +302,31 @@
             display: block;
         }
         
+        /* 輸入框美化 */
+        input[type="text"],
+        input[type="number"],
+        select {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(108, 142, 173, 0.1);
+            outline: none;
+        }
+
+        input[type="text"]:hover,
+        input[type="number"]:hover {
+            border-color: #c0c0c0;
+        }
+
         .progress-info {
             max-width: 600px;
             margin: 0 auto;
@@ -280,6 +345,30 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes shimmer {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.85;
+            }
+        }
+
+        #progressBarFill {
+            animation: shimmer 2s infinite;
         }
 
         .error-message {
@@ -312,11 +401,19 @@
         }
 
         .stat-card {
-            background: linear-gradient(135deg, #6C8EAD 0%, #A08EBC 100%);
-            padding: 25px;
-            border-radius: 15px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            padding: 28px;
+            border-radius: 16px;
             color: white !important;
             text-align: center;
+            box-shadow: 0 6px 20px rgba(108, 142, 173, 0.25);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: fadeIn 0.6s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 10px 30px rgba(108, 142, 173, 0.35);
         }
 
         .stat-value {
@@ -379,30 +476,41 @@
 
         table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
             background: white;
+            border-radius: 12px;
+            overflow: hidden;
         }
 
         thead {
-            background: #f8f9fa;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
         }
 
         th {
-            padding: 15px;
+            padding: 16px;
             text-align: left;
             font-weight: 600;
-            color: #555;
-            border-bottom: 2px solid #e0e0e0;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.85rem;
             white-space: nowrap;
         }
 
         td {
-            padding: 15px;
+            padding: 16px;
             border-bottom: 1px solid #f0f0f0;
         }
 
-        tr:hover {
+        tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        tbody tr:hover {
             background: #f8f9fa;
+            transform: scale(1.005);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
         .address-cell {
@@ -581,6 +689,11 @@
 </style>
 </head>
 <body>
+    <!-- 版本號徽章 -->
+    <div style="position: fixed; top: 20px; right: 20px; background: rgba(108, 142, 173, 0.95); color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); backdrop-filter: blur(10px); transition: all 0.3s ease;">
+        v2.0.0
+    </div>
+    
     <div class="container">
         <div class="header">
             <h1>🔥 Four.meme 早期買家分析器 🔥</h1>
@@ -714,9 +827,6 @@
                     
                     <div id="progressDetail" style="text-align: center; color: #666; font-size: 0.9em;">
                     </div>
-                    
-                    <div id="estimatedTime" style="text-align: center; color: #6C8EAD; font-size: 0.9em; margin-top: 5px;">
-                    </div>
                 </div>
             </div>
 
@@ -786,7 +896,6 @@
             document.getElementById('progressBarFill').style.width = '0%';
             document.getElementById('progressPercent').textContent = '0%';
             document.getElementById('progressDetail').textContent = '';
-            document.getElementById('estimatedTime').textContent = '';
         }
 
         // 開始輪詢進度（使用 session_id）
@@ -878,18 +987,6 @@
                         if (data.completed > 0) {
                             document.getElementById('progressDetail').textContent = `已處理 ${data.completed}/${data.total}`;
                         }
-                    }
-                    
-                    // 顯示剩餘時間
-                    if (data.estimated_time > 0) {
-                        const min = Math.floor(data.estimated_time / 60);
-                        const sec = data.estimated_time % 60;
-                        let txt = '⏳ 預估剩餘：';
-                        if (min > 0) txt += `${min} 分 `;
-                        txt += `${sec} 秒`;
-                        document.getElementById('estimatedTime').textContent = txt;
-                    } else {
-                        document.getElementById('estimatedTime').textContent = '';
                     }
                 })
                 .catch(err => {
@@ -1444,19 +1541,49 @@
         <div style="width: 100%;">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
                 <div class="brand-left">
-                    <div class="brand-logo">🏹 NHA</div>
+                    <div class="brand-logo">🔰</div>
                     <div class="brand-info">
-                        <div class="brand-title">四射！ • NHA • 51</div>
+                        <div class="brand-title">伍壹 51 製作</div>
                         <div class="brand-social">
-                            <span>📧</span>
-                            <a href="/cdn-cgi/l/email-protection#28464049181f1a1d68585a475c474645494144064b4745"><span class="__cf_email__" data-cfemail="bed0d6df8e898c8bfececcd1cad1d0d3dfd7d290ddd1d3">[email&#160;protected]</span></a>
+                            <a href="https://x.com/0x515151" target="_blank" rel="noopener" style="color: #1DA1F2; text-decoration: none; display: flex; align-items: center; gap: 6px; transition: opacity 0.3s;">
+                                <svg style="width: 18px; height: 18px;" viewBox="0 0 24 24">
+                                    <path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                </svg>
+                                <span>@0x515151</span>
+                            </a>
                         </div>
                     </div>
                 </div>
-                <div class="brand-version">v1.0.0 - 2026.01</div>
+                <div class="brand-version">v2.0.0 - 2026.01.25</div>
             </div>
             
             <div class="brand-donate">
                 <span class="brand-donate-label">💝 打賞地址：</span>
                 <div class="brand-donate-address" onclick="copyDonateAddress()" title="點擊複製地址">
-       
+                       <div class="brand-donate-address" onclick="copyDonateAddress()" title="點擊複製地址">
+                    0xe0b7e35556731872B3CE18c9645D69290F428C1C
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+    <script>
+        function copyDonateAddress() {
+            const address = '0xe0b7e35556731872B3CE18c9645D69290F428C1C';
+            navigator.clipboard.writeText(address).then(() => {
+                alert('✅ 打賞地址已複製！');
+            }).catch(() => {
+                // 備用方案
+                const textarea = document.createElement('textarea');
+                textarea.value = address;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('✅ 打賞地址已複製！');
+            });
+        }
+    </script>
+</body>
+</html>
