@@ -163,6 +163,12 @@ class FourMemeAnalyzer:
             data = self._call_etherscan_v2_api(api_key, params)
             if data.get("result"):
                 tx = data["result"]
+                
+                # 檢查 result 是否為字典（可能是錯誤訊息字串）
+                if not isinstance(tx, dict):
+                    print(f"      ⚠️ 交易數據格式錯誤: {tx}")
+                    return {'bnb_in': 0, 'bnb_out': 0, 'net_bnb': 0}
+                
                 from_addr = tx.get('from', '').lower()
                 to_addr = tx.get('to', '').lower()
                 value_hex = tx.get('value', '0x0')
