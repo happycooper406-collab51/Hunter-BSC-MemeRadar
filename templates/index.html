@@ -811,7 +811,7 @@
                 <div class="nav-links">
                     <a href="https://x.com/0x515151" target="_blank">🐦 Twitter</a>
                     <button class="donate-badge" onclick="copyDonateAddress()">💝 打賞</button>
-                    <span class="version-badge">v2.0.0</span>
+                    <span class="version-badge">v2.0.1</span>
                 </div>
             </div>
 
@@ -984,7 +984,7 @@
                     <div class="footer-social">
                         <a href="https://x.com/0x515151" target="_blank" class="social-link">🐦 Twitter</a>
                         <a href="#" class="social-link">📄 Docs</a>
-                        <a href="#" class="social-link">v2.0.0</a>
+                        <a href="#" class="social-link">v2.0.1</a>
                     </div>
                     
                     <div class="footer-info">
@@ -1226,8 +1226,8 @@
             }
             document.getElementById('maxProfit').textContent = `×${maxProfit.toFixed(1)}`;
             
-            // 機器人數量
-            const robotCount = result.buyers.filter(b => b.is_likely_bot).length;
+            // 機器人數量 - 使用正確的欄位名稱
+            const robotCount = result.buyers.filter(b => b.is_bot).length;
             document.getElementById('robots').textContent = robotCount;
             
             // 時間區間
@@ -1272,12 +1272,12 @@
             }
 
             tbody.innerHTML = data.buyers.map((buyer, index) => {
-                // 安全檢查和數值轉換
-                const buyBnb = Number(buyer.total_buy_bnb) || 0;
-                const sellBnb = Number(buyer.total_sell_bnb) || 0;
+                // 安全檢查和數值轉換 - 使用正確的欄位名稱
+                const buyBnb = Number(buyer.bnb_spent) || 0;
+                const sellBnb = Number(buyer.bnb_received) || 0;
                 const profit = Number(buyer.profit_multiple) || 0;
                 const address = buyer.address || '未知';
-                const isBot = buyer.is_likely_bot || false;
+                const isBot = buyer.is_bot || false;
                 
                 return `
                 <tr>
