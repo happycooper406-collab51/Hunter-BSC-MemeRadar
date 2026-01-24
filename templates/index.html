@@ -310,7 +310,7 @@
             background: linear-gradient(135deg, #6C8EAD 0%, #A08EBC 100%);
             padding: 25px;
             border-radius: 15px;
-            color: white;
+            color: white !important;
             text-align: center;
         }
 
@@ -318,11 +318,13 @@
             font-size: 2.5rem;
             font-weight: 700;
             margin-bottom: 8px;
+            color: white !important;
         }
 
         .stat-label {
             font-size: 0.95rem;
-            opacity: 0.9;
+            opacity: 0.95;
+            color: white !important;
         }
 
         .table-controls {
@@ -803,10 +805,26 @@
             fetch(`/api/progress/${sessionId}`)
                 .then(r => r.json())
                 .then(data => {
-                    // 檢查是否完成或錯誤
-                    if (data.status === 'completed' || data.status === 'error') {
-                        console.log('分析已完成或錯誤，停止輪詢');
+                    // 檢查是否完成
+                    if (data.status === 'completed') {
+                        console.log('✅ 分析完成！');
                         stopProgressPolling();
+                        hideLoading();
+                        
+                        // 如果有結果，顯示
+                        if (data.result) {
+                            currentResults = data.result;
+                            displayResults(data.result);
+                        }
+                        return;
+                    }
+                    
+                    // 檢查是否錯誤
+                    if (data.status === 'error') {
+                        console.log('❌ 分析錯誤');
+                        stopProgressPolling();
+                        hideLoading();
+                        showError('分析過程中發生錯誤');
                         return;
                     }
                     
@@ -872,6 +890,7 @@
                 .catch(err => {
                     console.error('獲取進度失敗:', err);
                     stopProgressPolling();
+                    hideLoading();
                 });
         }
 
@@ -1186,21 +1205,30 @@
             })
             .then(response => response.json())
             .then(data => {
-                // 獲取 session_id 並開始輪詢進度
-                if (data.session_id) {
-                    console.log('Session ID:', data.session_id);
-                    startProgressPolling(data.session_id);
-                }
+                console.log('API 返回:', data);
                 
-                hideLoading();
-                stopProgressPolling();
-                
-                if (data.success) {
+                // 如果後端返回完整結果（同步執行完成）
+                if (data.success && data.buyers) {
+                    console.log('⚠️ 後端同步執行完成，直接顯示結果');
+                    hideLoading();
+                    stopProgressPolling();
                     currentResults = data;
                     displayResults(data);
-                } else {
-                        showError(data.error || '分析失敗');
+                    return;
                 }
+                
+                // 如果是異步模式，開始輪詢進度
+                if (data.session_id && !data.buyers) {
+                    console.log('✅ 開始輪詢進度，Session ID:', data.session_id);
+                    startProgressPolling(data.session_id);
+                    // 不要立即 hideLoading，等進度完成再隱藏
+                    return;
+                }
+                
+                // 錯誤情況
+                hideLoading();
+                stopProgressPolling();
+                showError(data.error || '分析失敗');
             })
             .catch(error => {
                 stopProgressPolling();
