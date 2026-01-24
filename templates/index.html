@@ -1250,20 +1250,29 @@
                 return;
             }
 
-            tbody.innerHTML = data.buyers.map((buyer, index) => `
+            tbody.innerHTML = data.buyers.map((buyer, index) => {
+                // 安全檢查
+                const buyBnb = buyer.total_buy_bnb || 0;
+                const sellBnb = buyer.total_sell_bnb || 0;
+                const profit = buyer.profit_multiple || 0;
+                const address = buyer.address || '未知';
+                const isBot = buyer.is_likely_bot || false;
+                
+                return `
                 <tr>
                     <td><span class="rank-badge">${index + 1}</span></td>
-                    <td class="address-cell" onclick="window.open('https://bscscan.com/address/${buyer.address}', '_blank')">
-                        ${buyer.address.substring(0, 6)}...${buyer.address.substring(38)}
+                    <td class="address-cell" onclick="window.open('https://bscscan.com/address/${address}', '_blank')">
+                        ${address.substring(0, 6)}...${address.substring(38)}
                     </td>
-                    <td>${buyer.total_buy_bnb.toFixed(4)}</td>
-                    <td>${buyer.total_sell_bnb.toFixed(4)}</td>
-                    <td class="profit-positive">×${buyer.profit_multiple.toFixed(2)}</td>
-                    <td class="${buyer.is_likely_bot ? 'status-active' : ''}">
-                        ${buyer.is_likely_bot ? '🤖 Bot' : '✓ Human'}
+                    <td>${buyBnb.toFixed(4)}</td>
+                    <td>${sellBnb.toFixed(4)}</td>
+                    <td class="profit-positive">×${profit.toFixed(2)}</td>
+                    <td class="${isBot ? 'status-active' : ''}">
+                        ${isBot ? '🤖 Bot' : '✓ Human'}
                     </td>
                 </tr>
-            `).join('');
+                `;
+            }).join('');
         }
 
         // 重置進度
