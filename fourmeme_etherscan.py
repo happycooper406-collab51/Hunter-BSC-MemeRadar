@@ -665,16 +665,20 @@ class FourMemeAnalyzer:
             
             # 計算利潤和倍數
             bnb_price_usd = token_info.get('bnb_price_usd', 0)
-            has_bnb_data = 'bnb_spent' in data and 'bnb_received' in data
             
-            if has_bnb_data and bnb_price_usd > 0:
+            # 獲取 BNB 數據（可能不存在）
+            bnb_spent = data.get('bnb_spent', 0)
+            bnb_received = data.get('bnb_received', 0)
+            bnb_profit = bnb_received - bnb_spent
+            
+            # 判斷是否有有效的 BNB 數據
+            has_valid_bnb_data = (bnb_spent > 0 or bnb_received > 0) and bnb_price_usd > 0
+            
+            if has_valid_bnb_data:
                 # 使用精準的 BNB 數據
-                bnb_spent = data.get('bnb_spent', 0)
-                bnb_received = data.get('bnb_received', 0)
-                bnb_profit = bnb_received - bnb_spent
                 
                 # 計算還持有的代幣價值（用 BNB）
-                # 假設當前代幣價格 = 最後賣出價格（簡化）
+                holding_value_bnb = 0
                 if sell_amount > 0 and bnb_received > 0:
                     # 平均賣出價格（BNB per token）
                     avg_sell_price_bnb = bnb_received / sell_amount
@@ -683,14 +687,18 @@ class FourMemeAnalyzer:
                     # 平均買入價格（BNB per token）
                     avg_buy_price_bnb = bnb_spent / buy_amount
                     holding_value_bnb = holding * avg_buy_price_bnb
-                else:
-                    holding_value_bnb = 0
                 
                 # 總價值 = 已賣出的 BNB + 還持有的代幣價值
                 total_value_bnb = bnb_received + holding_value_bnb
                 
-                # BNB 倍數
-                profit_multiple = (total_value_bnb / bnb_spent) if bnb_spent > 0 else 0
+                # BNB 倍數計算
+                if bnb_spent > 0:
+                    profit_multiple = total_value_bnb / bnb_spent
+                elif bnb_received > 0 and bnb_spent == 0:
+                    # 無成本獲得（空投/獎勵），設為特殊值
+                    profit_multiple = 999.99  # 表示極高倍數
+                else:
+                    profit_multiple = 0
                 
                 # 轉換為 USD
                 buy_value_usd = bnb_spent * bnb_price_usd
