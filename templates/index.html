@@ -1003,9 +1003,28 @@
     </div>
 
     <!-- Loading -->
+    <!-- Loading with Progress -->
     <div class="loading-overlay" id="loading">
         <div class="spinner"></div>
         <div class="loading-text">正在分析中...</div>
+        
+        <!-- 進度顯示 -->
+        <div style="margin-top: 30px; text-align: center; max-width: 500px;">
+            <div style="background: rgba(30, 20, 45, 0.8); border: 1px solid rgba(168, 85, 247, 0.15); border-radius: 12px; padding: 20px;">
+                <div id="progressStage" style="color: var(--primary); font-size: 1.1rem; margin-bottom: 12px;">初始化...</div>
+                <div id="progressMessage" style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 16px;">準備中...</div>
+                
+                <!-- 進度條 -->
+                <div style="background: rgba(10, 14, 23, 0.6); border-radius: 8px; height: 8px; overflow: hidden; margin-bottom: 8px;">
+                    <div id="progressBarFill" style="height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); width: 0%; transition: width 0.3s ease;"></div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-tertiary);">
+                    <span id="progressPercent">0%</span>
+                    <span id="progressDetail"></span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -1039,9 +1058,9 @@
                 maxTxs
             });
 
-            // 顯示 loading
+            // 顯示 loading 並開始假進度動畫
             document.getElementById('loading').classList.add('active');
-            resetProgress();
+            startFakeProgress();
 
             // 呼叫真實 API
             fetch('/api/analyze', {
@@ -1061,13 +1080,24 @@
             })
             .then(response => response.json())
             .then(data => {
-                console.log('📊 API 回應:', data);
+                console.log('📊 API 完整回應:', data);
+                stopFakeProgress();
                 
                 if (!data.success) {
                     alert('分析失敗: ' + (data.error || '未知錯誤'));
                     document.getElementById('loading').classList.remove('active');
                     return;
                 }
+
+                // 檢查是否有數據
+                if (!data.buyers || !Array.isArray(data.buyers)) {
+                    console.error('❌ 數據格式錯誤:', data);
+                    alert('分析完成但無數據，請檢查 Console');
+                    document.getElementById('loading').classList.remove('active');
+                    return;
+                }
+
+                console.log(`✅ 找到 ${data.buyers.length} 個買家`);
 
                 // 隱藏 loading
                 document.getElementById('loading').classList.remove('active');
@@ -1078,11 +1108,11 @@
 
                 // 填充統計數據
                 document.getElementById('tokenInfo').textContent = `Token: ${address.substring(0, 10)}...`;
-                document.getElementById('totalTx').textContent = data.total_buyers || '0';
+                document.getElementById('totalTx').textContent = data.buyers.length || '0';
                 
                 // 最高利潤
                 const maxProfit = data.buyers && data.buyers.length > 0 ? 
-                    Math.max(...data.buyers.map(b => b.profit_multiple)).toFixed(1) : '0';
+                    Math.max(...data.buyers.map(b => b.profit_multiple || 0)).toFixed(1) : '0';
                 document.getElementById('maxProfit').textContent = `×${maxProfit}`;
                 
                 // 機器人數量
@@ -1131,10 +1161,56 @@
             `).join('');
         }
 
+        // 假進度條（模擬進度）
+        let fakeProgressInterval = null;
+        let fakeProgress = 0;
+
+        function startFakeProgress() {
+            fakeProgress = 0;
+            updateProgressUI(0, '初始化分析...', '正在連接 API...');
+            
+            fakeProgressInterval = setInterval(() => {
+                // 緩慢增長到 90%
+                if (fakeProgress < 90) {
+                    fakeProgress += Math.random() * 3;
+                    if (fakeProgress > 90) fakeProgress = 90;
+                    
+                    let message = '';
+                    if (fakeProgress < 20) message = '正在獲取代幣資訊...';
+                    else if (fakeProgress < 40) message = '正在查詢交易記錄...';
+                    else if (fakeProgress < 60) message = '正在分析買家數據...';
+                    else if (fakeProgress < 80) message = '正在計算利潤...';
+                    else message = '即將完成...';
+                    
+                    updateProgressUI(fakeProgress, '分析中', message);
+                }
+            }, 500);
+        }
+
+        function stopFakeProgress() {
+            if (fakeProgressInterval) {
+                clearInterval(fakeProgressInterval);
+                fakeProgressInterval = null;
+            }
+            updateProgressUI(100, '分析完成', '正在載入結果...');
+        }
+
+        function updateProgressUI(progress, stage, message) {
+            const progressBar = document.getElementById('progressBarFill');
+            const progressPercent = document.getElementById('progressPercent');
+            const progressStage = document.getElementById('progressStage');
+            const progressMessage = document.getElementById('progressMessage');
+            
+            if (progressBar) progressBar.style.width = progress + '%';
+            if (progressPercent) progressPercent.textContent = Math.floor(progress) + '%';
+            if (progressStage) progressStage.textContent = stage;
+            if (progressMessage) progressMessage.textContent = message;
+        }
+
         // 重置進度
         function resetProgress() {
-            document.getElementById('progressStage') && (document.getElementById('progressStage').textContent = '正在分析中...');
-            document.getElementById('progressMessage') && (document.getElementById('progressMessage').textContent = '請稍候...');
+            fakeProgress = 0;
+            updateProgressUI(0, '初始化...', '準備中...');
         }
 
         function backToHome() {
