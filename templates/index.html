@@ -660,7 +660,7 @@
                     </div>
                 </div>
 
-                <button class="analyze-btn" onclick="analyzeToken()">
+                <button class="analyze-btn">
                     🚀 開始分析
                 </button>
             </div>
@@ -683,7 +683,7 @@
                     <div class="search-box">
                         <input type="text" id="searchInput" placeholder="搜尋地址..." onkeyup="filterTable()">
                     </div>
-                    <button class="export-btn" onclick="exportCSV()">
+                    <button class="export-btn">
                         📥 匯出 CSV
                     </button>
                 </div>
@@ -1299,6 +1299,68 @@
                 alert('❌ 匯出 CSV 失敗：' + error.message);
             });
         }
+
+        // ==================== 確保事件正確綁定 ====================
+        // 頁面載入完成後綁定按鈕事件（防止緩存問題）
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 正在綁定按鈕事件...');
+            
+            // 綁定「開始分析」按鈕
+            const analyzeBtn = document.querySelector('.analyze-btn');
+            if (analyzeBtn) {
+                // 移除舊的 onclick（如果有）
+                analyzeBtn.onclick = null;
+                // 重新綁定
+                analyzeBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('✅ 分析按鈕被點擊');
+                    analyzeToken();
+                });
+                console.log('✅ 分析按鈕事件已綁定');
+            } else {
+                console.error('❌ 找不到分析按鈕');
+            }
+            
+            // 綁定「匯出 CSV」按鈕
+            const exportBtn = document.querySelector('.export-btn');
+            if (exportBtn) {
+                exportBtn.onclick = null;
+                exportBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('✅ 匯出按鈕被點擊');
+                    exportCSV();
+                });
+                console.log('✅ 匯出按鈕事件已綁定');
+            }
+        });
+        
+        // 如果頁面已經載入完成（防止時序問題）
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            console.log('🔧 頁面已載入，立即綁定事件...');
+            setTimeout(function() {
+                const analyzeBtn = document.querySelector('.analyze-btn');
+                if (analyzeBtn && !analyzeBtn._eventBound) {
+                    analyzeBtn._eventBound = true;
+                    analyzeBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        console.log('✅ 分析按鈕被點擊（備用綁定）');
+                        analyzeToken();
+                    });
+                    console.log('✅ 分析按鈕事件已綁定（備用）');
+                }
+                
+                const exportBtn = document.querySelector('.export-btn');
+                if (exportBtn && !exportBtn._eventBound) {
+                    exportBtn._eventBound = true;
+                    exportBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        console.log('✅ 匯出按鈕被點擊（備用綁定）');
+                        exportCSV();
+                    });
+                    console.log('✅ 匯出按鈕事件已綁定（備用）');
+                }
+            }, 100);
+        }
     </script>
 
     <!-- 品牌資訊 -->
@@ -1311,7 +1373,7 @@
                         <div class="brand-title">四射！ • NHA • 51</div>
                         <div class="brand-social">
                             <span>📧</span>
-                            <a href="mailto:nha0725@protonmail.com">nha0725@protonmail.com</a>
+                            <a href="/cdn-cgi/l/email-protection#28464049181f1a1d68585a475c474645494144064b4745"><span class="__cf_email__" data-cfemail="bed0d6df8e898c8bfececcd1cad1d0d3dfd7d290ddd1d3">[email&#160;protected]</span></a>
                         </div>
                     </div>
                 </div>
@@ -1321,11 +1383,4 @@
             <div class="brand-donate">
                 <span class="brand-donate-label">💝 打賞地址：</span>
                 <div class="brand-donate-address" onclick="copyDonateAddress()" title="點擊複製地址">
-                    0x036dae2378752c76f4e7fa7e2f5882877b86e4d2
-                </div>
-            </div>
-        </div>
-    </div>
-
-</body>
-</html>
+       
