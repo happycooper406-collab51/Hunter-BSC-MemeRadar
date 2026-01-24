@@ -243,11 +243,23 @@ class FourMemeAnalyzer:
             print(f"Etherscan API V2 Error: {e}")
             return {"status": "0", "result": [], "message": str(e)}
     
-    def analyze_token(self, api_key: str, token_address: str, start_seconds: int, end_seconds: int, max_txs_per_buyer: int = 100) -> dict:
+    def analyze_token(self, api_key: str, token_address: str, start_seconds: int, end_seconds: int, max_txs_per_buyer: int = 100, session_id: str = None) -> dict:
         """分析代幣在指定時間區間內的買家"""
         token_address = token_address.lower().strip()
+        
+        # 如果沒有 session_id，創建一個（用於非 API 調用）
+        if session_id is None:
+            session_id = create_analysis_session()
+        
+        # 定義進度更新函數（綁定 session_id）
+        def update_progress(stage='', progress=0, message='', total=0, completed=0):
+            update_session_progress(session_id, stage, progress, message, total, completed)
+        
         print(f"\n[Etherscan API V2] 分析代幣: {token_address}")
         print(f"   Chain ID: 56 (BNB Smart Chain)")
+        
+        # 初始化進度
+        update_progress(stage='初始化', progress=0, message='正在初始化分析...')
         
         # 格式化顯示起始時間
         start_minutes = start_seconds // 60
@@ -447,6 +459,7 @@ class FourMemeAnalyzer:
             print(f"   機器人篩選閾值: {max_txs_per_buyer} 筆")
             
             # ===== 優化：第一階段 - 收集所有需要查詢的 tx_hash =====
+            update_progress(stage='收集交易', progress=20, message='收集交易列表中...')
             print(f"\n   📦 階段 1/2: 收集交易列表...")
             all_tx_hashes = set()
             valid_buyers = {}  # 過濾後的買家
@@ -485,6 +498,8 @@ class FourMemeAnalyzer:
             print(f"      機器人: {skipped_buyers} 個")
             print(f"      不重複交易: {len(all_tx_hashes)} 筆")
             
+            update_progress(stage='查詢交易', progress=40, message=f'需要查詢 {len(all_tx_hashes)} 筆交易', total=len(all_tx_hashes), completed=0)
+            
             # ===== 優化：第二階段 - 批次查詢所有交易（按地址快取） =====
             print(f"\n   💰 階段 2/2: 批次查詢 BNB 流動...")
             # 使用二維快取：tx_cache[address][tx_hash] = bnb_data
@@ -507,10 +522,19 @@ class FourMemeAnalyzer:
                         
                         # 進度提示
                         if queried_count % 50 == 0:
+                            progress_pct = 40 + int(40 * queried_count / total_queries_needed)  # 40-80%
+                            update_progress(
+                                stage='查詢交易',
+                                progress=progress_pct,
+                                message=f'已查詢 {queried_count}/{total_queries_needed} 筆交易',
+                                total=total_queries_needed,
+                                completed=queried_count
+                            )
                             print(f"      ✅ 已查詢 {queried_count}/{total_queries_needed} 筆 ({queried_count/total_queries_needed*100:.1f}%)")
             
             print(f"   ✅ 查詢完成！共 {queried_count} 筆交易")
             
+            update_progress(stage='計算利潤', progress=80, message='開始計算利潤...')
             # ===== 第三階段 - 使用快取計算利潤（快速，不調用 API） =====
             print(f"\n   🧮 計算利潤中...")
             processed_buyers = 0
@@ -784,7 +808,7 @@ def api_analyze():
         if max_txs < 0:
             return jsonify({"success": False, "error": "機器人閾值必須 >= 0"})
         
-        result = analyzer.analyze_token(api_key, token_address, start_total_seconds, end_total_seconds, max_txs)
+        result = analyzer.analyze_token(api_key, token_address, start_total_seconds, end_total_seconds, max_txs, session_id=session_id)
         # 標記會話完成
         complete_session(session_id, 'completed')
         
