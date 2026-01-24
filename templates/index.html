@@ -1058,11 +1058,11 @@
                 maxTxs
             });
 
-            // 顯示 loading 並開始假進度動畫
+            // 顯示 loading
             document.getElementById('loading').classList.add('active');
-            startFakeProgress();
+            updateProgressUI(0, '初始化', '正在連接 API...');
 
-            // 呼叫真實 API
+            // 呼叫異步 API
             fetch('/api/analyze', {
                 method: 'POST',
                 headers: {
@@ -1080,13 +1080,7 @@
             })
             .then(response => response.json())
             .then(data => {
-                console.log('📊 API 完整回應:', data);
-                console.log('📊 data.success:', data.success);
-                console.log('📊 data.buyers:', data.buyers);
-                console.log('📊 data.buyers 類型:', typeof data.buyers);
-                console.log('📊 data.buyers 是陣列?', Array.isArray(data.buyers));
-                
-                stopFakeProgress();
+                console.log('📊 API 回應:', data);
                 
                 if (!data.success) {
                     console.error('❌ API 返回失敗:', data.error);
@@ -1095,49 +1089,154 @@
                     return;
                 }
 
-                // 隱藏 loading
-                document.getElementById('loading').classList.remove('active');
-                
-                // 切換到結果頁（即使沒數據也顯示）
-                document.getElementById('heroPage').style.display = 'none';
-                document.getElementById('resultsPage').classList.add('active');
-
-                // 檢查數據
-                if (!data.buyers || !Array.isArray(data.buyers) || data.buyers.length === 0) {
-                    console.warn('⚠️ 無買家數據');
-                    document.getElementById('tokenInfo').textContent = `Token: ${address.substring(0, 10)}...`;
-                    document.getElementById('totalTx').textContent = '0';
-                    document.getElementById('maxProfit').textContent = '×0';
-                    document.getElementById('robots').textContent = '0';
-                    document.getElementById('timeRange').textContent = `${startTime}-${endTime}s`;
-                    
-                    const tbody = document.getElementById('tableBody');
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 40px;">無數據 - 可能該時間區間內沒有交易</td></tr>';
-                    return;
-                }
-
-                console.log(`✅ 找到 ${data.buyers.length} 個買家`);
-
-                // 填充統計數據
-                document.getElementById('tokenInfo').textContent = `Token: ${address.substring(0, 10)}...`;
-                document.getElementById('totalTx').textContent = data.buyers.length || '0';
-                
-                // 最高利潤
-                const maxProfit = data.buyers && data.buyers.length > 0 ? 
-                    Math.max(...data.buyers.map(b => b.profit_multiple || 0)).toFixed(1) : '0';
-                document.getElementById('maxProfit').textContent = `×${maxProfit}`;
-                
-                // 機器人數量
-                const robotCount = data.buyers ? 
-                    data.buyers.filter(b => b.is_likely_bot).length : 0;
-                document.getElementById('robots').textContent = robotCount;
-                
-                // 時間區間
-                document.getElementById('timeRange').textContent = `${startTime}-${endTime}s`;
-
-                // 填充表格
-                displayResults(data);
+                // 收到 session_id，開始輪詢進度
+                const sessionId = data.session_id;
+                console.log('✅ 收到 Session ID:', sessionId);
+                startProgressPolling(sessionId, address, startTime, endTime);
             })
+            .catch(error => {
+                console.error('❌ 錯誤:', error);
+                alert('網路錯誤: ' + error.message);
+                document.getElementById('loading').classList.remove('active');
+            });
+        }
+
+        // 進度輪詢
+        let progressPollingInterval = null;
+
+        function startProgressPolling(sessionId, tokenAddress, startTime, endTime) {
+            console.log('🔄 開始輪詢進度:', sessionId);
+            
+            progressPollingInterval = setInterval(() => {
+                fetch(`/api/progress/${sessionId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('📊 進度:', data);
+                        
+                        if (!data) {
+                            console.error('❌ 無進度數據');
+                            return;
+                        }
+
+                        // 更新進度 UI
+                        const progress = data.progress || 0;
+                        const stage = data.stage || '處理中';
+                        const message = data.message || '';
+                        const detail = data.completed && data.total ? 
+                            `${data.completed}/${data.total}` : '';
+                        
+                        updateProgressUI(progress, stage, message, detail);
+
+                        // 檢查是否完成
+                        if (data.status === 'completed') {
+                            console.log('✅ 分析完成！');
+                            console.log('📊 完整數據:', data);
+                            console.log('📊 data.result:', data.result);
+                            console.log('📊 data.result 類型:', typeof data.result);
+                            console.log('📊 data.result.buyers:', data.result?.buyers);
+                            console.log('📊 data.result.buyers 是陣列?', Array.isArray(data.result?.buyers));
+                            
+                            stopProgressPolling();
+                            
+                            // 獲取結果 - 放寬檢查
+                            if (data.result) {
+                                console.log('✅ 有 result 物件');
+                                
+                                // 檢查 buyers
+                                if (data.result.buyers && Array.isArray(data.result.buyers)) {
+                                    console.log(`✅ 找到 ${data.result.buyers.length} 個買家`);
+                                    displayAnalysisComplete(data.result, tokenAddress, startTime, endTime);
+                                } else {
+                                    console.error('❌ buyers 不是陣列或不存在');
+                                    console.error('result keys:', Object.keys(data.result));
+                                    
+                                    // 嘗試備用方案
+                                    if (data.result.length > 0) {
+                                        console.log('⚠️ result 本身是陣列，直接使用');
+                                        displayAnalysisComplete({buyers: data.result}, tokenAddress, startTime, endTime);
+                                    } else {
+                                        alert('分析完成但無買家數據');
+                                        document.getElementById('loading').classList.remove('active');
+                                    }
+                                }
+                            } else {
+                                console.error('❌ 無 result 物件');
+                                alert('分析完成但無數據');
+                                document.getElementById('loading').classList.remove('active');
+                            }
+                        } else if (data.status === 'error') {
+                            console.error('❌ 分析錯誤');
+                            stopProgressPolling();
+                            alert('分析錯誤，請重試');
+                            document.getElementById('loading').classList.remove('active');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('❌ 輪詢錯誤:', error);
+                    });
+            }, 500);  // 每 500ms 輪詢一次
+        }
+
+        function stopProgressPolling() {
+            if (progressPollingInterval) {
+                clearInterval(progressPollingInterval);
+                progressPollingInterval = null;
+                console.log('⏹️ 停止輪詢');
+            }
+        }
+
+        function displayAnalysisComplete(result, tokenAddress, startTime, endTime) {
+            console.log('🎉 顯示結果:', result);
+            
+            // 隱藏 loading
+            document.getElementById('loading').classList.remove('active');
+            
+            // 切換到結果頁
+            document.getElementById('heroPage').style.display = 'none';
+            document.getElementById('resultsPage').classList.add('active');
+
+            // 填充統計數據
+            document.getElementById('tokenInfo').textContent = `Token: ${tokenAddress.substring(0, 10)}...`;
+            document.getElementById('totalTx').textContent = result.buyers.length || '0';
+            
+            // 最高利潤
+            const maxProfit = result.buyers && result.buyers.length > 0 ? 
+                Math.max(...result.buyers.map(b => b.profit_multiple || 0)).toFixed(1) : '0';
+            document.getElementById('maxProfit').textContent = `×${maxProfit}`;
+            
+            // 機器人數量
+            const robotCount = result.buyers ? 
+                result.buyers.filter(b => b.is_likely_bot).length : 0;
+            document.getElementById('robots').textContent = robotCount;
+            
+            // 時間區間
+            document.getElementById('timeRange').textContent = `${startTime}-${endTime}s`;
+
+            // 填充表格
+            displayResults(result);
+        }
+
+        function startFakeProgress() {
+            // 移除假進度，改用真實進度
+        }
+
+        function stopFakeProgress() {
+            // 移除假進度，改用真實進度
+        }
+
+        function updateProgressUI(progress, stage, message, detail) {
+            const progressBar = document.getElementById('progressBarFill');
+            const progressPercent = document.getElementById('progressPercent');
+            const progressStage = document.getElementById('progressStage');
+            const progressMessage = document.getElementById('progressMessage');
+            const progressDetail = document.getElementById('progressDetail');
+            
+            if (progressBar) progressBar.style.width = progress + '%';
+            if (progressPercent) progressPercent.textContent = Math.floor(progress) + '%';
+            if (progressStage) progressStage.textContent = stage;
+            if (progressMessage) progressMessage.textContent = message;
+            if (progressDetail && detail) progressDetail.textContent = detail;
+        }
             .catch(error => {
                 console.error('❌ 錯誤:', error);
                 alert('網路錯誤: ' + error.message);
@@ -1171,52 +1270,6 @@
                     </td>
                 </tr>
             `).join('');
-        }
-
-        // 假進度條（模擬進度）
-        let fakeProgressInterval = null;
-        let fakeProgress = 0;
-
-        function startFakeProgress() {
-            fakeProgress = 0;
-            updateProgressUI(0, '初始化分析...', '正在連接 API...');
-            
-            fakeProgressInterval = setInterval(() => {
-                // 緩慢增長到 90%
-                if (fakeProgress < 90) {
-                    fakeProgress += Math.random() * 3;
-                    if (fakeProgress > 90) fakeProgress = 90;
-                    
-                    let message = '';
-                    if (fakeProgress < 20) message = '正在獲取代幣資訊...';
-                    else if (fakeProgress < 40) message = '正在查詢交易記錄...';
-                    else if (fakeProgress < 60) message = '正在分析買家數據...';
-                    else if (fakeProgress < 80) message = '正在計算利潤...';
-                    else message = '即將完成...';
-                    
-                    updateProgressUI(fakeProgress, '分析中', message);
-                }
-            }, 500);
-        }
-
-        function stopFakeProgress() {
-            if (fakeProgressInterval) {
-                clearInterval(fakeProgressInterval);
-                fakeProgressInterval = null;
-            }
-            updateProgressUI(100, '分析完成', '正在載入結果...');
-        }
-
-        function updateProgressUI(progress, stage, message) {
-            const progressBar = document.getElementById('progressBarFill');
-            const progressPercent = document.getElementById('progressPercent');
-            const progressStage = document.getElementById('progressStage');
-            const progressMessage = document.getElementById('progressMessage');
-            
-            if (progressBar) progressBar.style.width = progress + '%';
-            if (progressPercent) progressPercent.textContent = Math.floor(progress) + '%';
-            if (progressStage) progressStage.textContent = stage;
-            if (progressMessage) progressMessage.textContent = message;
         }
 
         // 重置進度
