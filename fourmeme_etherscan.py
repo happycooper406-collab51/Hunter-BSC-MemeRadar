@@ -14,6 +14,8 @@ from datetime import datetime
 from typing import Dict, List
 import json
 import uuid
+import os
+from threading import Lock
 
 app = Flask(__name__)
 CORS(app, resources={
@@ -24,78 +26,110 @@ CORS(app, resources={
     }
 })
 
-# ==================== Session-Based 進度追蹤系統 ====================
-import threading
+# ==================== Session 管理（文件存儲，支援多 Workers）====================
+SESSION_DIR = '/tmp/analysis_sessions'
+os.makedirs(SESSION_DIR, exist_ok=True)
+cleanup_lock = Lock()
 
-# 存儲所有分析會話的進度（支援多 workers）
-all_analysis_sessions = {}
-sessions_lock = threading.Lock()
+def get_session_path(session_id):
+    """獲取 session 文件路徑"""
+    return os.path.join(SESSION_DIR, f"{session_id}.json")
 
 def create_analysis_session():
-    """創建新的分析會話，返回唯一 session_id"""
+    """創建新的分析會話（文件存儲）"""
     session_id = str(uuid.uuid4())
-    with sessions_lock:
-        all_analysis_sessions[session_id] = {
-            'status': 'processing',  # 改為 processing
-            'stage': '初始化',
-            'progress': 0,
-            'message': '分析即將開始...',
-            'total': 0,
-            'completed': 0,
-            'estimated_time': 0,
-            'start_time': time.time(),
-            'created_at': time.time()
-        }
-    print(f"✅ Session 創建: {session_id}")
+    session_data = {
+        'status': 'processing',
+        'stage': '初始化',
+        'progress': 0,
+        'message': '分析即將開始...',
+        'total': 0,
+        'completed': 0,
+        'estimated_time': 0,
+        'start_time': time.time(),
+        'created_at': time.time()
+    }
+    
+    with open(get_session_path(session_id), 'w') as f:
+        json.dump(session_data, f)
+    
+    print(f"✅ Session 創建（文件）: {session_id}")
     return session_id
 
+def get_session(session_id):
+    """從文件讀取 session"""
+    try:
+        with open(get_session_path(session_id), 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return None
+
 def update_session_progress(session_id, stage='', progress=0, message='', total=0, completed=0):
-    """更新特定會話的進度"""
-    with sessions_lock:
-        if session_id not in all_analysis_sessions:
-            return
-        
-        session = all_analysis_sessions[session_id]
-        
-        if stage:
-            session['stage'] = stage
-        if progress >= 0:
-            session['progress'] = progress
-        if message:
-            session['message'] = message
-        if total > 0:
-            session['total'] = total
-        if completed >= 0:
-            session['completed'] = completed
-        
-        # 計算預估時間
-        if session['start_time'] > 0 and progress > 0 and progress < 100:
-            elapsed = time.time() - session['start_time']
-            total_estimated = elapsed / (progress / 100)
-            session['estimated_time'] = int(total_estimated - elapsed)
-        else:
-            session['estimated_time'] = 0
+    """更新 session 進度（文件存儲）"""
+    session_path = get_session_path(session_id)
+    
+    try:
+        with open(session_path, 'r') as f:
+            session = json.load(f)
+    except FileNotFoundError:
+        return
+    
+    if stage:
+        session['stage'] = stage
+    if progress >= 0:
+        session['progress'] = progress
+    if message:
+        session['message'] = message
+    if total > 0:
+        session['total'] = total
+    if completed >= 0:
+        session['completed'] = completed
+    
+    if session['start_time'] > 0 and progress > 0 and progress < 100:
+        elapsed = time.time() - session['start_time']
+        total_estimated = elapsed / (progress / 100)
+        session['estimated_time'] = int(total_estimated - elapsed)
+    else:
+        session['estimated_time'] = 0
+    
+    with open(session_path, 'w') as f:
+        json.dump(session, f)
 
 def cleanup_old_sessions():
-    """清理超過 1 小時的舊會話，避免記憶體洩漏"""
-    with sessions_lock:
+    """清理超過 1 小時的舊會話文件"""
+    with cleanup_lock:
         current_time = time.time()
-        to_delete = []
-        for session_id, session in all_analysis_sessions.items():
-            if current_time - session['created_at'] > 3600:  # 1小時
-                to_delete.append(session_id)
-        
-        for session_id in to_delete:
-            del all_analysis_sessions[session_id]
+        for filename in os.listdir(SESSION_DIR):
+            if filename.endswith('.json'):
+                filepath = os.path.join(SESSION_DIR, filename)
+                try:
+                    with open(filepath, 'r') as f:
+                        session = json.load(f)
+                    if current_time - session['created_at'] > 3600:
+                        os.remove(filepath)
+                        print(f"🗑️ 清理舊 session: {filename}")
+                except:
+                    pass
 
 def complete_session(session_id, status='completed', result=None):
-    """標記會話為完成或錯誤，並可選存儲結果"""
-    with sessions_lock:
-        if session_id in all_analysis_sessions:
-            all_analysis_sessions[session_id]['status'] = status
-            all_analysis_sessions[session_id]['progress'] = 100
-            if result:
-                all_analysis_sessions[session_id]['result'] = result
+    """標記會話為完成或錯誤（文件存儲）"""
+    session_path = get_session_path(session_id)
+    
+    try:
+        with open(session_path, 'r') as f:
+            session = json.load(f)
+        
+        session['status'] = status
+        session['progress'] = 100
+        if result:
+            session['result'] = result
+        
+        with open(session_path, 'w') as f:
+            json.dump(session, f)
+        print(f"✅ Session 完成: {session_id}, status: {status}")
+    except FileNotFoundError:
+        print(f"⚠️ Session 不存在: {session_id}")
+        pass
 # ==================== 進度追蹤結束 ====================
 
 # 排除的系統地址
@@ -767,16 +801,16 @@ def health_check():
 
 
 @app.route('/api/progress/<session_id>', methods=['GET'])
-def get_progress(session_id):
-    """獲取特定會話的進度"""
-    with sessions_lock:
-        if session_id in all_analysis_sessions:
-            return jsonify(all_analysis_sessions[session_id])
-        else:
-            return jsonify({
-                'status': 'error',
-                'message': 'Session not found'
-            }), 404
+def get_progress_api(session_id):
+    """獲取特定會話的進度（從文件讀取）"""
+    session = get_session(session_id)
+    if session:
+        return jsonify(session)
+    else:
+        return jsonify({
+            'status': 'error',
+            'message': 'Session not found'
+        }), 404
 
 @app.route("/api/analyze", methods=["POST"])
 def api_analyze():
