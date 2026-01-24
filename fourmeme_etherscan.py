@@ -36,16 +36,17 @@ def create_analysis_session():
     session_id = str(uuid.uuid4())
     with sessions_lock:
         all_analysis_sessions[session_id] = {
-            'status': 'analyzing',
-            'stage': '',
+            'status': 'processing',  # 改為 processing
+            'stage': '初始化',
             'progress': 0,
-            'message': '',
+            'message': '分析即將開始...',
             'total': 0,
             'completed': 0,
             'estimated_time': 0,
             'start_time': time.time(),
             'created_at': time.time()
         }
+    print(f"✅ Session 創建: {session_id}")
     return session_id
 
 def update_session_progress(session_id, stage='', progress=0, message='', total=0, completed=0):
@@ -818,12 +819,18 @@ def api_analyze():
         # 立即返回 session_id，在背景執行分析
         import threading
         
+        print(f"🚀 準備啟動異步分析，Session ID: {session_id}")
+        
         def run_analysis():
+            print(f"🔧 線程開始執行，Session ID: {session_id}")
             try:
                 result = analyzer.analyze_token(api_key, token_address, start_total_seconds, end_total_seconds, max_txs, session_id=session_id)
+                print(f"✅ 分析完成，準備標記 session")
                 # 標記會話完成，並存儲結果
                 complete_session(session_id, 'completed', result=result)
+                print(f"✅ Session 標記完成")
             except Exception as e:
+                print(f"❌ 分析錯誤: {str(e)}")
                 # 標記會話為錯誤
                 complete_session(session_id, 'error')
                 import traceback
@@ -833,6 +840,7 @@ def api_analyze():
         thread = threading.Thread(target=run_analysis)
         thread.daemon = True
         thread.start()
+        print(f"✅ 線程已啟動")
         
         # 立即返回 session_id
         return jsonify({
