@@ -1133,8 +1133,8 @@
                             console.log('📊 完整數據:', data);
                             console.log('📊 data.result:', data.result);
                             console.log('📊 data.result 類型:', typeof data.result);
-                            console.log('📊 data.result.buyers:', data.result?.buyers);
-                            console.log('📊 data.result.buyers 是陣列?', Array.isArray(data.result?.buyers));
+                            console.log('📊 data.result.buyers:', data.result && data.result.buyers);
+                            console.log('📊 data.result.buyers 是陣列?', data.result && Array.isArray(data.result.buyers));
                             
                             stopProgressPolling();
                             
