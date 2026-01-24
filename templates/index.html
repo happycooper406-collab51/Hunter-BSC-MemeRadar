@@ -1237,12 +1237,6 @@
             if (progressMessage) progressMessage.textContent = message;
             if (progressDetail && detail) progressDetail.textContent = detail;
         }
-            .catch(error => {
-                console.error('❌ 錯誤:', error);
-                alert('網路錯誤: ' + error.message);
-                document.getElementById('loading').classList.remove('active');
-            });
-        }
 
         // 顯示結果表格
         function displayResults(data) {
