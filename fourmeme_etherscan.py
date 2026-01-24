@@ -85,10 +85,12 @@ def update_session_progress(session_id, stage='', progress=0, message='', total=
     if completed >= 0:
         session['completed'] = completed
     
-    if session['start_time'] > 0 and progress > 0 and progress < 100:
+    if session['start_time'] > 0 and progress > 5 and progress < 95:
         elapsed = time.time() - session['start_time']
         total_estimated = elapsed / (progress / 100)
-        session['estimated_time'] = int(total_estimated - elapsed)
+        remaining = total_estimated - elapsed
+        # 限制最小值，避免顯示負數或太小的數字
+        session['estimated_time'] = max(5, int(remaining))
     else:
         session['estimated_time'] = 0
     
