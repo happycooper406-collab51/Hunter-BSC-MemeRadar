@@ -151,6 +151,146 @@
             color: var(--primary);
         }
 
+        .lang-toggle {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .lang-toggle:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .help-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .help-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Help Modal */
+        .help-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 8, 16, 0.9);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .help-modal.active {
+            display: flex;
+        }
+
+        .help-content {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(168, 85, 247, 0.3);
+        }
+
+        .help-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: var(--surface);
+            z-index: 10;
+        }
+
+        .help-header h2 {
+            margin: 0;
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+
+        .help-close {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            transition: color 0.3s;
+        }
+
+        .help-close:hover {
+            color: var(--primary);
+        }
+
+        .help-body {
+            padding: 24px;
+        }
+
+        .help-step {
+            margin-bottom: 24px;
+        }
+
+        .help-step h3 {
+            color: var(--primary);
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .help-step p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .help-tips {
+            background: rgba(168, 85, 247, 0.05);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 24px;
+        }
+
+        .help-tips h3 {
+            color: var(--primary);
+            margin-top: 0;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+        }
+
+        .help-tips ul {
+            margin: 0;
+            padding-left: 20px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .help-tips li {
+            margin-bottom: 8px;
+        }
+
         .donate-badge {
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: var(--bg-dark);
@@ -662,17 +802,19 @@
         }
 
         .status-bot {
-            color: #94a3b8;
-            opacity: 0.6;
+            color: #9ca3af;
+            opacity: 0.7;
+            font-weight: 400;
         }
 
         .status-holding {
-            color: #10b981;
+            color: #c084fc;
             font-weight: 500;
         }
 
         .status-sold {
-            color: #60a5fa;
+            color: #a78bfa;
+            font-weight: 500;
         }
 
         /* Loading */
@@ -706,6 +848,211 @@
 
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+
+        /* 掃描線動畫 */
+        @keyframes scan {
+            0% {
+                top: -2px;
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                top: 100%;
+                opacity: 0;
+            }
+        }
+
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(168, 85, 247, 0.8), 
+                transparent);
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.8);
+            animation: scan 8s linear infinite;
+            z-index: 1;
+        }
+
+        /* 粒子動畫 */
+        @keyframes particleFloat {
+            0%, 100% {
+                transform: translate(0, 0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty));
+                opacity: 0;
+            }
+        }
+
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--primary);
+            animation: particleFloat linear infinite;
+        }
+
+        /* 為每個粒子設置不同的位置和動畫 */
+        .particle:nth-child(1) { left: 10%; top: 20%; --tx: 30px; --ty: -100px; animation-duration: 15s; animation-delay: 0s; }
+        .particle:nth-child(2) { left: 20%; top: 80%; --tx: -40px; --ty: -120px; animation-duration: 18s; animation-delay: 2s; }
+        .particle:nth-child(3) { left: 30%; top: 40%; --tx: 50px; --ty: -90px; animation-duration: 20s; animation-delay: 4s; }
+        .particle:nth-child(4) { left: 40%; top: 60%; --tx: -30px; --ty: -110px; animation-duration: 16s; animation-delay: 1s; }
+        .particle:nth-child(5) { left: 50%; top: 30%; --tx: 40px; --ty: -95px; animation-duration: 19s; animation-delay: 3s; }
+        .particle:nth-child(6) { left: 60%; top: 70%; --tx: -50px; --ty: -105px; animation-duration: 17s; animation-delay: 5s; }
+        .particle:nth-child(7) { left: 70%; top: 50%; --tx: 35px; --ty: -115px; animation-duration: 21s; animation-delay: 2s; }
+        .particle:nth-child(8) { left: 80%; top: 25%; --tx: -45px; --ty: -100px; animation-duration: 15s; animation-delay: 4s; }
+        .particle:nth-child(9) { left: 90%; top: 85%; --tx: 25px; --ty: -120px; animation-duration: 18s; animation-delay: 1s; }
+        .particle:nth-child(10) { left: 15%; top: 45%; --tx: -35px; --ty: -95px; animation-duration: 20s; animation-delay: 3s; }
+        .particle:nth-child(11) { left: 25%; top: 65%; --tx: 45px; --ty: -110px; animation-duration: 16s; animation-delay: 5s; }
+        .particle:nth-child(12) { left: 35%; top: 15%; --tx: -25px; --ty: -105px; animation-duration: 19s; animation-delay: 0s; }
+        .particle:nth-child(13) { left: 45%; top: 75%; --tx: 50px; --ty: -90px; animation-duration: 17s; animation-delay: 2s; }
+        .particle:nth-child(14) { left: 55%; top: 35%; --tx: -40px; --ty: -115px; animation-duration: 21s; animation-delay: 4s; }
+        .particle:nth-child(15) { left: 65%; top: 55%; --tx: 30px; --ty: -100px; animation-duration: 15s; animation-delay: 1s; }
+        .particle:nth-child(16) { left: 75%; top: 85%; --tx: -50px; --ty: -120px; animation-duration: 18s; animation-delay: 3s; }
+        .particle:nth-child(17) { left: 85%; top: 45%; --tx: 40px; --ty: -95px; animation-duration: 20s; animation-delay: 5s; }
+        .particle:nth-child(18) { left: 95%; top: 65%; --tx: -30px; --ty: -110px; animation-duration: 16s; animation-delay: 0s; }
+        .particle:nth-child(19) { left: 5%; top: 55%; --tx: 35px; --ty: -105px; animation-duration: 19s; animation-delay: 2s; }
+        .particle:nth-child(20) { left: 50%; top: 10%; --tx: -45px; --ty: -115px; animation-duration: 17s; animation-delay: 4s; }
+
+        /* 數據流動畫 */
+        @keyframes dataFlow {
+            0% {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.3;
+            }
+            90% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(100vh);
+                opacity: 0;
+            }
+        }
+
+        .data-stream {
+            position: absolute;
+            width: 1px;
+            height: 100px;
+            background: linear-gradient(to bottom, 
+                transparent,
+                rgba(168, 85, 247, 0.4),
+                transparent);
+            animation: dataFlow linear infinite;
+            z-index: 1;
+        }
+
+        .stream-1 { left: 15%; animation-duration: 12s; animation-delay: 0s; }
+        .stream-2 { left: 40%; animation-duration: 15s; animation-delay: 3s; }
+        .stream-3 { left: 65%; animation-duration: 13s; animation-delay: 6s; }
+        .stream-4 { left: 85%; animation-duration: 14s; animation-delay: 2s; }
+
+        /* 數字跳動動畫 */
+        @keyframes countUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 卡片淡入動畫 */
+        @keyframes cardFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-card {
+            animation: cardFadeIn 0.6s ease-out forwards;
+            opacity: 0;
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+        .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+        /* 表格行淡入動畫 */
+        @keyframes rowFadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        tbody tr {
+            animation: rowFadeIn 0.4s ease-out forwards;
+            opacity: 0;
+        }
+
+        /* 為前20行設置延遲 */
+        tbody tr:nth-child(1) { animation-delay: 0.05s; }
+        tbody tr:nth-child(2) { animation-delay: 0.1s; }
+        tbody tr:nth-child(3) { animation-delay: 0.15s; }
+        tbody tr:nth-child(4) { animation-delay: 0.2s; }
+        tbody tr:nth-child(5) { animation-delay: 0.25s; }
+        tbody tr:nth-child(6) { animation-delay: 0.3s; }
+        tbody tr:nth-child(7) { animation-delay: 0.35s; }
+        tbody tr:nth-child(8) { animation-delay: 0.4s; }
+        tbody tr:nth-child(9) { animation-delay: 0.45s; }
+        tbody tr:nth-child(10) { animation-delay: 0.5s; }
+        tbody tr:nth-child(n+11) { animation-delay: 0.5s; }
+
+        /* 強化 Glow 效果 */
+        .btn-analyze:hover {
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.6),
+                        0 0 60px rgba(168, 85, 247, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .stat-card:hover {
+            box-shadow: 0 8px 30px rgba(168, 85, 247, 0.3),
+                        0 0 40px rgba(168, 85, 247, 0.2);
+        }
+
+        input:focus {
+            box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.3),
+                        0 0 20px rgba(168, 85, 247, 0.2);
         }
 
         .loading-text {
@@ -832,6 +1179,39 @@
         <div class="grid-pattern"></div>
         <div class="glow-orb orb-1"></div>
         <div class="glow-orb orb-2"></div>
+        
+        <!-- 掃描線 -->
+        <div class="scan-line"></div>
+        
+        <!-- 粒子系統 -->
+        <div class="particles">
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+        </div>
+        
+        <!-- 數據流 -->
+        <div class="data-stream stream-1"></div>
+        <div class="data-stream stream-2"></div>
+        <div class="data-stream stream-3"></div>
+        <div class="data-stream stream-4"></div>
     </div>
 
     <!-- Hero Page -->
@@ -842,19 +1222,21 @@
                 <div class="logo">伍壹 51</div>
                 <div class="nav-links">
                     <a href="https://x.com/0x515151" target="_blank">🐦 Twitter</a>
-                    <button class="donate-badge" onclick="copyDonateAddress()">💝 打賞</button>
-                    <span class="version-badge">v2.0.3</span>
+                    <button class="donate-badge" onclick="copyDonateAddress()" data-i18n="donate">💝 打賞</button>
+                    <button class="help-btn" onclick="toggleHelp()">ℹ️ <span id="helpText">說明</span></button>
+                    <button class="lang-toggle" onclick="toggleLanguage()">🌐 <span id="langText">EN</span></button>
+                    <span class="version-badge">v2.2.0</span>
                 </div>
             </div>
 
             <!-- Hero Section -->
             <div class="hero">
                 <div class="hero-left">
-                    <h1>
+                    <h1 id="heroTitle">
                         發現<span class="gradient-text">早鳥獵手</span><br>
                         找出真正的獲利贏家
                     </h1>
-                    <p>
+                    <p id="heroSubtitle">
                         透過區塊鏈數據分析，追蹤代幣早期買家的交易行為，<br>
                         精準識別獲利機會與機器人模式。
                     </p>
@@ -863,10 +1245,10 @@
                     <div class="input-section">
                         <div class="form-group">
                             <label class="form-label tooltip-wrapper">
-                                Etherscan API Key <span class="required">*</span>
+                                <span id="labelApiKey">Etherscan API Key</span> <span class="required">*</span>
                                 <span class="tooltip-icon">
                                     ?
-                                    <span class="tooltip-text">從 Etherscan 取得免費 API Key</span>
+                                    <span class="tooltip-text" id="tooltipApiKey">從 Etherscan 取得免費 API Key</span>
                                 </span>
                             </label>
                             <input type="password" id="apiKey" placeholder="輸入你的 Etherscan API Key" />
@@ -874,7 +1256,7 @@
 
                         <div class="form-group">
                             <label class="form-label">
-                                代幣合約地址 <span class="required">*</span>
+                                <span id="labelTokenAddress">代幣合約地址</span> <span class="required">*</span>
                             </label>
                             <input type="text" id="tokenAddress" placeholder="0x..." />
                         </div>
@@ -882,40 +1264,40 @@
                         <div class="time-inputs">
                             <div class="form-group">
                                 <label class="form-label tooltip-wrapper">
-                                    起始時間（開盤後）
+                                    <span id="labelStartTime">起始時間（開盤後）</span>
                                     <span class="tooltip-icon">
                                         ?
-                                        <span class="tooltip-text">從開盤後多久開始抓取<br>例：15分鐘 = 從開盤後15分鐘開始</span>
+                                        <span class="tooltip-text" id="tooltipStartTime">從開盤後多久開始抓取<br>例：15分鐘 = 從開盤後15分鐘開始</span>
                                     </span>
                                 </label>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                                     <div>
                                         <input type="number" id="startMinutes" value="0" placeholder="0" />
-                                        <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 4px;">分鐘</div>
+                                        <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 4px;" id="unitMinutes1">分鐘</div>
                                     </div>
                                     <div>
                                         <input type="number" id="startSeconds" value="0" placeholder="0" />
-                                        <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 4px;">秒</div>
+                                        <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 4px;" id="unitSeconds1">秒</div>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label tooltip-wrapper">
-                                    結束時間（開盤後）
+                                    <span id="labelEndTime">結束時間（開盤後）</span>
                                     <span class="tooltip-icon">
                                         ?
-                                        <span class="tooltip-text">到開盤後多久結束抓取<br>例：30分鐘 = 到開盤後30分鐘為止</span>
+                                        <span class="tooltip-text" id="tooltipEndTime">到開盤後多久結束抓取<br>例：30分鐘 = 到開盤後30分鐘為止</span>
                                     </span>
                                 </label>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                                     <div>
                                         <input type="number" id="endMinutes" value="1" placeholder="1" />
-                                        <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 4px;">分鐘</div>
+                                        <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 4px;" id="unitMinutes2">分鐘</div>
                                     </div>
                                     <div>
                                         <input type="number" id="endSeconds" value="0" placeholder="0" />
-                                        <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 4px;">秒</div>
+                                        <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 4px;" id="unitSeconds2">秒</div>
                                     </div>
                                 </div>
                             </div>
@@ -923,16 +1305,16 @@
 
                         <div class="form-group">
                             <label class="form-label tooltip-wrapper">
-                                機器人閾值
+                                <span id="labelBotThreshold">機器人閾值</span>
                                 <span class="tooltip-icon">
                                     ?
-                                    <span class="tooltip-text">篩選高頻交易帳號<br>交易筆數 > 此值 = 機器人<br>建議：10（嚴格）~ 100（寬鬆）</span>
+                                    <span class="tooltip-text" id="tooltipBotThreshold">篩選高頻交易帳號<br>交易筆數 > 此值 = 機器人<br>建議：10（嚴格）~ 100（寬鬆）</span>
                                 </span>
                             </label>
                             <input type="number" id="maxTxs" value="10" placeholder="10" />
                         </div>
 
-                        <button class="btn-analyze" onclick="startAnalysis()">
+                        <button class="btn-analyze" onclick="startAnalysis()" id="btnAnalyze">
                             🚀 開始分析
                         </button>
                     </div>
@@ -999,12 +1381,12 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>#</th>
-                            <th onclick="sortTable('address')">地址 <span class="sort-indicator" id="sort-address"></span></th>
-                            <th onclick="sortTable('bnb')">BNB 利潤 <span class="sort-indicator" id="sort-bnb"></span></th>
-                            <th onclick="sortTable('usd')">總利潤 (USD) <span class="sort-indicator" id="sort-usd"></span></th>
-                            <th onclick="sortTable('multiple')">倍數 <span class="sort-indicator" id="sort-multiple"></span></th>
-                            <th>狀態</th>
+                            <th id="th-rank">#</th>
+                            <th id="th-address" onclick="sortTable('address')"><span class="sort-indicator" id="sort-address"></span></th>
+                            <th id="th-bnb" onclick="sortTable('bnb')"><span class="sort-indicator" id="sort-bnb"></span></th>
+                            <th id="th-usd" onclick="sortTable('usd')"><span class="sort-indicator" id="sort-usd"></span></th>
+                            <th id="th-multiple" onclick="sortTable('multiple')"><span class="sort-indicator" id="sort-multiple"></span></th>
+                            <th id="th-status"></th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -1019,7 +1401,7 @@
                     <div class="footer-social">
                         <a href="https://x.com/0x515151" target="_blank" class="social-link">🐦 Twitter</a>
                         <a href="#" class="social-link">📄 Docs</a>
-                        <a href="#" class="social-link">v2.0.3</a>
+                        <a href="#" class="social-link">v2.1.0</a>
                     </div>
                     
                     <div class="footer-info">
@@ -1057,6 +1439,46 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-tertiary);">
                     <span id="progressPercent">0%</span>
                     <span id="progressDetail"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 使用說明彈窗 -->
+    <div class="help-modal" id="helpModal" onclick="closeHelpOnOutside(event)">
+        <div class="help-content" onclick="event.stopPropagation()">
+            <div class="help-header">
+                <h2 id="helpTitle">📖 使用說明</h2>
+                <button class="help-close" onclick="toggleHelp()">✕</button>
+            </div>
+            <div class="help-body">
+                <div class="help-step">
+                    <h3 id="helpStep1Title">1️⃣ 準備 API Key</h3>
+                    <p id="helpStep1Text">在 Etherscan 註冊並獲取 Etherscan V2 API</p>
+                </div>
+                <div class="help-step">
+                    <h3 id="helpStep2Title">2️⃣ 輸入代幣地址</h3>
+                    <p id="helpStep2Text">貼上要分析的 BSC 代幣合約地址<br>（現已支持 Four.meme & Flap）</p>
+                </div>
+                <div class="help-step">
+                    <h3 id="helpStep3Title">3️⃣ 設定時間區間</h3>
+                    <p id="helpStep3Text">選擇從開盤後多久開始/結束分析<br>例：0-60秒 = 分析開盤後第一分鐘的買家</p>
+                </div>
+                <div class="help-step">
+                    <h3 id="helpStep4Title">4️⃣ 設定機器人閾值</h3>
+                    <p id="helpStep4Text">交易筆數超過此值視為機器人<br>建議：10（嚴格）~ 100（寬鬆）</p>
+                </div>
+                <div class="help-step">
+                    <h3 id="helpStep5Title">5️⃣ 開始分析</h3>
+                    <p id="helpStep5Text">點擊按鈕，等待 1-10 分鐘<br>查看早期買家的利潤表現</p>
+                </div>
+                <div class="help-tips">
+                    <h3 id="helpTipsTitle">💡 提示</h3>
+                    <ul>
+                        <li id="helpTip1">聚焦開盤前 1-5 分鐘效果最好</li>
+                        <li id="helpTip2">利潤倍數高的非機器人帳號值得關注</li>
+                        <li id="helpTip3">可匯出 CSV 進行進一步分析</li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -1157,8 +1579,28 @@
                         const progress = data.progress || 0;
                         const stage = data.stage || '處理中';
                         const message = data.message || '';
-                        const detail = data.completed && data.total ? 
+                        let detail = data.completed && data.total ? 
                             `${data.completed}/${data.total}` : '';
+                        
+                        // 添加預估時間
+                        if (data.total && data.completed && data.completed > 0) {
+                            const total = data.total;
+                            let estimate = '';
+                            
+                            if (total < 100) {
+                                estimate = '約 1 分鐘';
+                            } else if (total < 300) {
+                                estimate = '約 2-3 分鐘';
+                            } else if (total < 1000) {
+                                estimate = '約 3-5 分鐘';
+                            } else if (total < 5000) {
+                                estimate = '約 5-10 分鐘';
+                            } else {
+                                estimate = '約 10-15 分鐘';
+                            }
+                            
+                            detail += ` | ⏱️ ${estimate}`;
+                        }
                         
                         updateProgressUI(progress, stage, message, detail);
 
@@ -1229,6 +1671,21 @@
             // 切換到結果頁
             document.getElementById('heroPage').style.display = 'none';
             document.getElementById('resultsPage').classList.add('active');
+            
+            // 初始化表頭語言
+            updateTableHeaders();
+            
+            // 更新表格標題
+            const tableTitleEl = document.querySelector('.table-header h2');
+            if (tableTitleEl) {
+                tableTitleEl.textContent = t('tableTitle');
+            }
+            
+            // 更新匯出按鈕
+            const exportBtn = document.querySelector('.export-btn');
+            if (exportBtn) {
+                exportBtn.textContent = t('export');
+            }
 
             // 安全檢查
             if (!result || !result.buyers || !Array.isArray(result.buyers)) {
@@ -1246,7 +1703,9 @@
 
             // 填充統計數據
             document.getElementById('tokenInfo').textContent = `Token: ${tokenAddress.substring(0, 10)}...`;
-            document.getElementById('totalTx').textContent = result.buyers.length || '0';
+            
+            // 使用數字跳動動畫
+            animateNumber('totalTx', 0, result.buyers.length || 0, 1000);
             
             // Token 名稱顯示
             if (result.token_info) {
@@ -1268,17 +1727,54 @@
                     maxProfit = Math.max(...profits);
                 }
             }
-            document.getElementById('maxProfit').textContent = `×${maxProfit.toFixed(1)}`;
+            // 使用數字跳動動畫（倍數）
+            animateNumber('maxProfit', 0, maxProfit, 1000, (val) => `×${val.toFixed(1)}`);
             
             // 機器人數量 - 使用正確的欄位名稱
             const robotCount = result.buyers.filter(b => b.is_bot).length;
-            document.getElementById('robots').textContent = robotCount;
+            animateNumber('robots', 0, robotCount, 1000);
             
             // 時間區間
             document.getElementById('timeRange').textContent = `${startTime}-${endTime}s`;
 
             // 填充表格
             displayResults(result);
+        }
+
+        // 數字跳動動畫函數
+        function animateNumber(elementId, start, end, duration, formatter = null) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            
+            const startTime = performance.now();
+            const difference = end - start;
+            
+            function updateNumber(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // 使用 easeOutCubic 緩動函數
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+                const current = start + (difference * easeProgress);
+                
+                if (formatter) {
+                    element.textContent = formatter(current);
+                } else {
+                    element.textContent = Math.floor(current);
+                }
+                
+                if (progress < 1) {
+                    requestAnimationFrame(updateNumber);
+                } else {
+                    if (formatter) {
+                        element.textContent = formatter(end);
+                    } else {
+                        element.textContent = end;
+                    }
+                }
+            }
+            
+            requestAnimationFrame(updateNumber);
         }
 
         function startFakeProgress() {
@@ -1329,13 +1825,13 @@
                 let statusClass = '';
                 
                 if (isBot) {
-                    displayStatus = '🤖 機器人';
+                    displayStatus = t('bot');
                     statusClass = 'status-bot';
                 } else if (status === '仍持倉') {
-                    displayStatus = '✓ 持倉中';
+                    displayStatus = t('holding');
                     statusClass = 'status-holding';
                 } else if (status === '已清倉') {
-                    displayStatus = '◎ 已清倉';
+                    displayStatus = t('sold');
                     statusClass = 'status-sold';
                 }
                 
@@ -1384,7 +1880,280 @@
         // 全局變數存儲當前分析結果
         let currentAnalysisData = null;
         let sortColumn = null;
-        let sortDirection = 'desc'; // 'asc' or 'desc'
+        let sortDirection = 'desc';
+        let currentLang = localStorage.getItem('lang') || 'zh';
+
+        // 獲取翻譯文字 - 放在最前面
+        function t(key) {
+            const translations = {
+                zh: {
+                    // 首頁
+                    heroTitle: '發現<span class="gradient-text">早鳥獵手</span><br>找出真正的獲利贏家',
+                    heroSubtitle: '分析區塊鏈數據中的早期買家行為，<br>識別獲利機會並偵測機器人模式。',
+                    labelApiKey: 'Etherscan API Key',
+                    labelTokenAddress: '代幣合約地址',
+                    labelStartTime: '起始時間（開盤後）',
+                    labelEndTime: '結束時間（開盤後）',
+                    labelBotThreshold: '機器人閾值',
+                    tooltipApiKey: '從 Etherscan 取得免費 API Key',
+                    tooltipStartTime: '從開盤後多久開始抓取<br>例：15分鐘 = 從開盤後15分鐘開始',
+                    tooltipEndTime: '到開盤後多久結束抓取<br>例：30分鐘 = 到開盤後30分鐘為止',
+                    tooltipBotThreshold: '篩選高頻交易帳號<br>交易筆數 > 此值 = 機器人<br>建議：10（嚴格）~ 100（寬鬆）',
+                    unitMinutes: '分鐘',
+                    unitSeconds: '秒',
+                    btnAnalyze: '🚀 開始分析',
+                    placeholderApiKey: '輸入你的 Etherscan API Key',
+                    
+                    // 結果頁
+                    rank: '#',
+                    address: '地址',
+                    bnbProfit: 'BNB 利潤',
+                    usdProfit: '總利潤 (USD)',
+                    multiple: '倍數',
+                    status: '狀態',
+                    bot: '🤖 機器人',
+                    holding: '✓ 持倉中',
+                    sold: '◎ 已清倉',
+                    export: '📥 匯出 CSV',
+                    tableTitle: '早期買家排行榜',
+                    back: '← 返回',
+                    statTotalTx: '總交易數',
+                    statMaxProfit: '最高利潤',
+                    statRobots: '機器人',
+                    statTimeRange: '區間',
+                    
+                    // 使用說明
+                    helpBtn: '說明',
+                    helpTitle: '📖 使用說明',
+                    helpStep1Title: '1️⃣ 準備 API Key',
+                    helpStep1Text: '在 Etherscan 註冊並獲取 Etherscan V2 API',
+                    helpStep2Title: '2️⃣ 輸入代幣地址',
+                    helpStep2Text: '貼上要分析的 BSC 代幣合約地址<br>（現已支持 Four.meme & Flap）',
+                    helpStep3Title: '3️⃣ 設定時間區間',
+                    helpStep3Text: '選擇從開盤後多久開始/結束分析<br>例：0-60秒 = 分析開盤後第一分鐘的買家',
+                    helpStep4Title: '4️⃣ 設定機器人閾值',
+                    helpStep4Text: '交易筆數超過此值視為機器人<br>建議：10（嚴格）~ 100（寬鬆）',
+                    helpStep5Title: '5️⃣ 開始分析',
+                    helpStep5Text: '點擊按鈕，等待 1-10 分鐘<br>查看早期買家的利潤表現',
+                    helpTipsTitle: '💡 提示',
+                    helpTip1: '聚焦開盤前 1-5 分鐘效果最好',
+                    helpTip2: '利潤倍數高的非機器人帳號值得關注',
+                    helpTip3: '可匯出 CSV 進行進一步分析'
+                },
+                en: {
+                    // 首頁
+                    heroTitle: 'Discover <span class="gradient-text">Early Birds</span><br>Find Real Winners',
+                    heroSubtitle: 'Analyze early buyer behavior through blockchain data<br>to identify profit opportunities and detect bot patterns.',
+                    labelApiKey: 'Etherscan API Key',
+                    labelTokenAddress: 'Token Contract Address',
+                    labelStartTime: 'Start Time (After Launch)',
+                    labelEndTime: 'End Time (After Launch)',
+                    labelBotThreshold: 'Bot Threshold',
+                    tooltipApiKey: 'Get free API Key from Etherscan',
+                    tooltipStartTime: 'Start tracking after launch<br>e.g., 15 minutes = 15 min after launch',
+                    tooltipEndTime: 'Stop tracking after launch<br>e.g., 30 minutes = 30 min after launch',
+                    tooltipBotThreshold: 'Filter high-frequency accounts<br>Txs > value = Bot<br>Recommend: 10 (strict) ~ 100 (loose)',
+                    unitMinutes: 'min',
+                    unitSeconds: 'sec',
+                    btnAnalyze: '🚀 Start Analysis',
+                    placeholderApiKey: 'Enter your Etherscan API Key',
+                    
+                    // 結果頁
+                    rank: '#',
+                    address: 'Address',
+                    bnbProfit: 'BNB Profit',
+                    usdProfit: 'Total Profit (USD)',
+                    multiple: 'Multiple',
+                    status: 'Status',
+                    bot: '🤖 Bot',
+                    holding: '✓ Holding',
+                    sold: '◎ Sold',
+                    export: '📥 Export CSV',
+                    tableTitle: 'Early Buyer Leaderboard',
+                    back: '← Back',
+                    statTotalTx: 'Total Tx',
+                    statMaxProfit: 'Max Profit',
+                    statRobots: 'Bots',
+                    statTimeRange: 'Range',
+                    
+                    // 使用說明
+                    helpBtn: 'Guide',
+                    helpTitle: '📖 User Guide',
+                    helpStep1Title: '1️⃣ Get API Key',
+                    helpStep1Text: 'Register on Etherscan and obtain Etherscan V2 API',
+                    helpStep2Title: '2️⃣ Enter Token Address',
+                    helpStep2Text: 'Paste the BSC token contract address to analyze<br>(Now supports Four.meme & Flap)',
+                    helpStep3Title: '3️⃣ Set Time Range',
+                    helpStep3Text: 'Select start/end time after token launch<br>e.g., 0-60 sec = Analyze first minute buyers',
+                    helpStep4Title: '4️⃣ Set Bot Threshold',
+                    helpStep4Text: 'Transactions > threshold = Marked as bot<br>Recommend: 10 (strict) ~ 100 (loose)',
+                    helpStep5Title: '5️⃣ Start Analysis',
+                    helpStep5Text: 'Click button and wait 1-10 minutes<br>View early buyer profit performance',
+                    helpTipsTitle: '💡 Tips',
+                    helpTip1: 'Focus on first 1-5 minutes for best results',
+                    helpTip2: 'High-profit non-bot accounts are worth tracking',
+                    helpTip3: 'Export CSV for further analysis'
+                }
+            };
+            return translations[currentLang][key] || key;
+        }
+
+        // 更新表頭文字
+        function updateTableHeaders() {
+            const headers = {
+                'th-rank': 'rank',
+                'th-address': 'address',
+                'th-bnb': 'bnbProfit',
+                'th-usd': 'usdProfit',
+                'th-multiple': 'multiple',
+                'th-status': 'status'
+            };
+            
+            Object.keys(headers).forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    const sortIndicator = el.querySelector('.sort-indicator');
+                    if (sortIndicator) {
+                        // 有排序指示器的欄位
+                        const indicatorHTML = sortIndicator.outerHTML;
+                        el.innerHTML = t(headers[id]) + ' ' + indicatorHTML;
+                    } else {
+                        // 沒有排序指示器的欄位
+                        el.textContent = t(headers[id]);
+                    }
+                }
+            });
+        }
+
+        // 切換使用說明
+        function toggleHelp() {
+            const modal = document.getElementById('helpModal');
+            modal.classList.toggle('active');
+        }
+        
+        // 點擊外部關閉
+        function closeHelpOnOutside(event) {
+            if (event.target.id === 'helpModal') {
+                toggleHelp();
+            }
+        }
+
+        // 語言切換函數
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            localStorage.setItem('lang', currentLang);
+            applyLanguage();
+        }
+        
+        // 應用語言到所有元素
+        function applyLanguage() {
+            // 更新按鈕文字
+            document.getElementById('langText').textContent = currentLang === 'zh' ? 'EN' : '中文';
+            
+            // 首頁元素
+            const heroTitle = document.getElementById('heroTitle');
+            const heroSubtitle = document.getElementById('heroSubtitle');
+            const labelApiKey = document.getElementById('labelApiKey');
+            const labelTokenAddress = document.getElementById('labelTokenAddress');
+            const labelStartTime = document.getElementById('labelStartTime');
+            const labelEndTime = document.getElementById('labelEndTime');
+            const labelBotThreshold = document.getElementById('labelBotThreshold');
+            const tooltipApiKey = document.getElementById('tooltipApiKey');
+            const tooltipStartTime = document.getElementById('tooltipStartTime');
+            const tooltipEndTime = document.getElementById('tooltipEndTime');
+            const tooltipBotThreshold = document.getElementById('tooltipBotThreshold');
+            const btnAnalyze = document.getElementById('btnAnalyze');
+            const apiKeyInput = document.getElementById('apiKey');
+            
+            if (heroTitle) heroTitle.innerHTML = t('heroTitle');
+            if (heroSubtitle) heroSubtitle.innerHTML = t('heroSubtitle');
+            if (labelApiKey) labelApiKey.textContent = t('labelApiKey');
+            if (labelTokenAddress) labelTokenAddress.textContent = t('labelTokenAddress');
+            if (labelStartTime) labelStartTime.textContent = t('labelStartTime');
+            if (labelEndTime) labelEndTime.textContent = t('labelEndTime');
+            if (labelBotThreshold) labelBotThreshold.textContent = t('labelBotThreshold');
+            if (tooltipApiKey) tooltipApiKey.innerHTML = t('tooltipApiKey');
+            if (tooltipStartTime) tooltipStartTime.innerHTML = t('tooltipStartTime');
+            if (tooltipEndTime) tooltipEndTime.innerHTML = t('tooltipEndTime');
+            if (tooltipBotThreshold) tooltipBotThreshold.innerHTML = t('tooltipBotThreshold');
+            if (btnAnalyze) btnAnalyze.textContent = t('btnAnalyze');
+            if (apiKeyInput) apiKeyInput.placeholder = t('placeholderApiKey');
+            
+            // 單位
+            const unitMinutes1 = document.getElementById('unitMinutes1');
+            const unitSeconds1 = document.getElementById('unitSeconds1');
+            const unitMinutes2 = document.getElementById('unitMinutes2');
+            const unitSeconds2 = document.getElementById('unitSeconds2');
+            if (unitMinutes1) unitMinutes1.textContent = t('unitMinutes');
+            if (unitSeconds1) unitSeconds1.textContent = t('unitSeconds');
+            if (unitMinutes2) unitMinutes2.textContent = t('unitMinutes');
+            if (unitSeconds2) unitSeconds2.textContent = t('unitSeconds');
+            
+            // 使用說明按鈕和彈窗
+            const helpText = document.getElementById('helpText');
+            const helpTitle = document.getElementById('helpTitle');
+            const helpStep1Title = document.getElementById('helpStep1Title');
+            const helpStep1Text = document.getElementById('helpStep1Text');
+            const helpStep2Title = document.getElementById('helpStep2Title');
+            const helpStep2Text = document.getElementById('helpStep2Text');
+            const helpStep3Title = document.getElementById('helpStep3Title');
+            const helpStep3Text = document.getElementById('helpStep3Text');
+            const helpStep4Title = document.getElementById('helpStep4Title');
+            const helpStep4Text = document.getElementById('helpStep4Text');
+            const helpStep5Title = document.getElementById('helpStep5Title');
+            const helpStep5Text = document.getElementById('helpStep5Text');
+            const helpTipsTitle = document.getElementById('helpTipsTitle');
+            const helpTip1 = document.getElementById('helpTip1');
+            const helpTip2 = document.getElementById('helpTip2');
+            const helpTip3 = document.getElementById('helpTip3');
+            
+            if (helpText) helpText.textContent = t('helpBtn');
+            if (helpTitle) helpTitle.textContent = t('helpTitle');
+            if (helpStep1Title) helpStep1Title.textContent = t('helpStep1Title');
+            if (helpStep1Text) helpStep1Text.innerHTML = t('helpStep1Text');
+            if (helpStep2Title) helpStep2Title.textContent = t('helpStep2Title');
+            if (helpStep2Text) helpStep2Text.innerHTML = t('helpStep2Text');
+            if (helpStep3Title) helpStep3Title.textContent = t('helpStep3Title');
+            if (helpStep3Text) helpStep3Text.innerHTML = t('helpStep3Text');
+            if (helpStep4Title) helpStep4Title.textContent = t('helpStep4Title');
+            if (helpStep4Text) helpStep4Text.innerHTML = t('helpStep4Text');
+            if (helpStep5Title) helpStep5Title.textContent = t('helpStep5Title');
+            if (helpStep5Text) helpStep5Text.innerHTML = t('helpStep5Text');
+            if (helpTipsTitle) helpTipsTitle.textContent = t('helpTipsTitle');
+            if (helpTip1) helpTip1.textContent = t('helpTip1');
+            if (helpTip2) helpTip2.textContent = t('helpTip2');
+            if (helpTip3) helpTip3.textContent = t('helpTip3');
+            
+            // 檢查是否在結果頁
+            const resultsPage = document.getElementById('resultsPage');
+            if (resultsPage && resultsPage.classList.contains('active')) {
+                // 更新表頭
+                updateTableHeaders();
+                
+                // 更新表格標題
+                const tableTitleEl = document.querySelector('.table-header h2');
+                if (tableTitleEl) {
+                    tableTitleEl.textContent = t('tableTitle');
+                }
+                
+                // 更新匯出按鈕
+                const exportBtn = document.querySelector('.export-btn');
+                if (exportBtn) {
+                    exportBtn.textContent = t('export');
+                }
+                
+                // 重新渲染表格內容
+                if (currentAnalysisData) {
+                    displayResults(currentAnalysisData);
+                }
+            }
+        }
+
+        // 頁面載入時設定語言
+        window.addEventListener('DOMContentLoaded', () => {
+            applyLanguage();
+        });
+
 
         // 排序表格
         function sortTable(column) {
