@@ -16,6 +16,9 @@ import json
 import uuid
 import os
 from threading import Lock
+from concurrent.futures import ThreadPoolExecutor
+import queue
+import threading
 
 app = Flask(__name__)
 CORS(app, resources={
@@ -30,6 +33,156 @@ CORS(app, resources={
 SESSION_DIR = '/tmp/analysis_sessions'
 os.makedirs(SESSION_DIR, exist_ok=True)
 cleanup_lock = Lock()
+
+# ==================== 付費系統配置 ====================
+
+# 付費 API Key Pool（隱藏，用戶看不到）
+PAID_API_KEY_POOL = [
+    'ARYE15PZYTC77DK4S5JC4ZHIP4GRX9DFFT',
+    '5RI4PWM4ZWDBB937DD71ZXSJEWX5UTB81U',
+    'AHAE4UIUJMXYR8STF7C9R8ZYQTXG96J5AH',
+    'ZT8JEKHWVS8R542RK2HRMB8ERXNY2QFVSD',
+    'ESV8RZU94RBXYDP7NBYQ6PKTTHYJU7CBZR'
+]
+
+# 收款地址
+PAYMENT_RECEIVER = '0xe0b7e35556731872B3CE18c9645D69290F428C1C'
+
+# 付費配置
+PAYMENT_AMOUNT_BNB = 0.01  # BNB
+PAYMENT_TOKEN_EXPIRY = 3600  # 1 小時（秒）
+PAYMENT_TOKEN_USES = 3  # 3 次使用
+
+# 付費憑證存儲
+PAYMENT_TOKENS_FILE = '/tmp/payment_tokens.json'
+USED_TX_HASHES_FILE = '/tmp/used_tx_hashes.json'
+
+def load_payment_tokens():
+    """加載付費憑證"""
+    try:
+        with open(PAYMENT_TOKENS_FILE, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
+def save_payment_tokens(tokens):
+    """保存付費憑證"""
+    with open(PAYMENT_TOKENS_FILE, 'w') as f:
+        json.dump(tokens, f)
+
+def load_used_tx_hashes():
+    """加載已使用的交易 Hash"""
+    try:
+        with open(USED_TX_HASHES_FILE, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return []
+
+def save_used_tx_hashes(hashes):
+    """保存已使用的交易 Hash"""
+    with open(USED_TX_HASHES_FILE, 'w') as f:
+        json.dump(hashes, f)
+
+def get_paid_api_key():
+    """隨機獲取一個付費 API Key"""
+    import random
+    return random.choice(PAID_API_KEY_POOL)
+
+# ==================== Session 管理繼續 ====================
+
+# ==================== 並發控制系統 ====================
+
+# 最大並發分析數
+MAX_CONCURRENT_ANALYSIS = 4  # 根據 Render 資源使用率調整：512MB 可支援 4-6 個並發
+
+# 線程池
+analysis_executor = ThreadPoolExecutor(max_workers=MAX_CONCURRENT_ANALYSIS)
+
+# 活躍任務追蹤
+active_tasks = []  # 存儲 {session_id, start_time, token_address}
+active_tasks_lock = threading.Lock()
+
+# 排隊系統
+analysis_queue_data = []  # 存儲 {session_id, queued_at, position}
+queue_lock = threading.Lock()
+
+def get_system_status():
+    """獲取系統狀態"""
+    with active_tasks_lock:
+        active_count = len(active_tasks)
+        active_list = [
+            {
+                'session_id': task['session_id'],
+                'token': task['token_address'][:10] + '...',
+                'elapsed': int(time.time() - task['start_time'])
+            }
+            for task in active_tasks
+        ]
+    
+    with queue_lock:
+        queue_count = len(analysis_queue_data)
+        queue_list = [
+            {
+                'session_id': q['session_id'],
+                'position': q['position'],
+                'wait_time': int(time.time() - q['queued_at'])
+            }
+            for q in analysis_queue_data
+        ]
+    
+    return {
+        'active_count': active_count,
+        'active_tasks': active_list,
+        'queue_count': queue_count,
+        'queue_list': queue_list,
+        'max_concurrent': MAX_CONCURRENT_ANALYSIS,
+        'slots_available': MAX_CONCURRENT_ANALYSIS - active_count,
+        'total_users': active_count + queue_count,  # 總使用人數
+        'is_busy': active_count >= MAX_CONCURRENT_ANALYSIS  # 是否繁忙
+    }
+
+def add_active_task(session_id, token_address):
+    """添加活躍任務"""
+    with active_tasks_lock:
+        active_tasks.append({
+            'session_id': session_id,
+            'token_address': token_address,
+            'start_time': time.time()
+        })
+        print(f"✅ 添加活躍任務: {session_id}, 當前活躍: {len(active_tasks)}")
+
+def remove_active_task(session_id):
+    """移除活躍任務"""
+    with active_tasks_lock:
+        active_tasks[:] = [t for t in active_tasks if t['session_id'] != session_id]
+        print(f"✅ 移除活躍任務: {session_id}, 剩餘活躍: {len(active_tasks)}")
+
+def add_to_queue(session_id):
+    """添加到排隊"""
+    with queue_lock:
+        position = len(analysis_queue_data) + 1
+        analysis_queue_data.append({
+            'session_id': session_id,
+            'position': position,
+            'queued_at': time.time()
+        })
+        print(f"📥 添加到排隊: {session_id}, 位置: {position}")
+        return position
+
+def remove_from_queue(session_id):
+    """從排隊移除"""
+    with queue_lock:
+        analysis_queue_data[:] = [q for q in analysis_queue_data if q['session_id'] != session_id]
+        # 重新計算位置
+        for i, q in enumerate(analysis_queue_data):
+            q['position'] = i + 1
+
+def can_start_analysis():
+    """檢查是否可以開始分析"""
+    with active_tasks_lock:
+        return len(active_tasks) < MAX_CONCURRENT_ANALYSIS
+
+# ==================== Session 管理繼續 ====================
 
 def get_session_path(session_id):
     """獲取 session 文件路徑"""
@@ -816,6 +969,133 @@ def health_check():
     }), 200
 
 
+@app.route('/api/system-status', methods=['GET'])
+def get_status():
+    """獲取系統狀態"""
+    status = get_system_status()
+    return jsonify(status)
+
+@app.route('/api/verify-payment', methods=['POST'])
+def verify_payment():
+    """驗證付費並生成憑證"""
+    try:
+        from web3 import Web3
+        
+        data = request.json
+        tx_hash = data.get('tx_hash') or ""
+        if isinstance(tx_hash, str):
+            tx_hash = tx_hash.strip()
+        
+        if not tx_hash:
+            return jsonify({'success': False, 'error': '缺少交易 Hash'})
+        
+        # 檢查是否已使用過此交易
+        used_hashes = load_used_tx_hashes()
+        if tx_hash in used_hashes:
+            return jsonify({'success': False, 'error': '此交易已被使用'})
+        
+        # 連接 BSC 網路
+        w3 = Web3(Web3.HTTPProvider('https://bsc-dataseed.binance.org/'))
+        
+        # 獲取交易詳情
+        try:
+            tx = w3.eth.get_transaction(tx_hash)
+            receipt = w3.eth.get_transaction_receipt(tx_hash)
+        except Exception as e:
+            return jsonify({'success': False, 'error': f'無法獲取交易: {str(e)}'})
+        
+        # 驗證收款地址
+        if tx['to'].lower() != PAYMENT_RECEIVER.lower():
+            return jsonify({'success': False, 'error': '收款地址錯誤'})
+        
+        # 驗證金額（允許 ±1% 誤差）
+        amount_bnb = float(w3.from_wei(tx['value'], 'ether'))
+        expected = PAYMENT_AMOUNT_BNB
+        if not (expected * 0.99 <= amount_bnb <= expected * 1.01):
+            return jsonify({
+                'success': False, 
+                'error': f'金額錯誤：收到 {amount_bnb} BNB，應為 {expected} BNB'
+            })
+        
+        # 驗證交易成功
+        if receipt['status'] != 1:
+            return jsonify({'success': False, 'error': '交易失敗'})
+        
+        # 生成付費憑證
+        payment_token = str(uuid.uuid4())
+        
+        # 保存憑證
+        tokens = load_payment_tokens()
+        tokens[payment_token] = {
+            'tx_hash': tx_hash,
+            'from_address': tx['from'],
+            'amount': amount_bnb,
+            'created_at': time.time(),
+            'expiry': time.time() + PAYMENT_TOKEN_EXPIRY,
+            'uses_left': PAYMENT_TOKEN_USES,
+            'used_times': []
+        }
+        save_payment_tokens(tokens)
+        
+        # 標記交易已使用
+        used_hashes.append(tx_hash)
+        save_used_tx_hashes(used_hashes)
+        
+        print(f"✅ 付費驗證成功: {tx_hash[:10]}... → Token: {payment_token[:8]}...")
+        
+        return jsonify({
+            'success': True,
+            'token': payment_token,
+            'expiry_seconds': PAYMENT_TOKEN_EXPIRY,
+            'uses_left': PAYMENT_TOKEN_USES,
+            'amount_paid': amount_bnb
+        })
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': f'驗證失敗: {str(e)}'})
+
+@app.route('/api/check-payment-token', methods=['POST'])
+def check_payment_token():
+    """檢查付費憑證狀態"""
+    try:
+        data = request.json
+        payment_token = data.get('token') or ""
+        if isinstance(payment_token, str):
+            payment_token = payment_token.strip()
+        
+        if not payment_token:
+            return jsonify({'valid': False, 'error': '缺少憑證'})
+        
+        tokens = load_payment_tokens()
+        
+        if payment_token not in tokens:
+            return jsonify({'valid': False, 'error': '憑證不存在'})
+        
+        token_data = tokens[payment_token]
+        
+        # 檢查過期
+        if time.time() > token_data['expiry']:
+            return jsonify({'valid': False, 'error': '憑證已過期'})
+        
+        # 檢查次數
+        if token_data['uses_left'] <= 0:
+            return jsonify({'valid': False, 'error': '使用次數已用完'})
+        
+        # 計算剩餘時間
+        time_left = int(token_data['expiry'] - time.time())
+        
+        return jsonify({
+            'valid': True,
+            'uses_left': token_data['uses_left'],
+            'time_left_seconds': time_left,
+            'time_left_minutes': time_left // 60
+        })
+        
+    except Exception as e:
+        return jsonify({'valid': False, 'error': str(e)})
+
 @app.route('/api/progress/<session_id>', methods=['GET'])
 def get_progress_api(session_id):
     """獲取特定會話的進度（從文件讀取）"""
@@ -835,8 +1115,52 @@ def api_analyze():
     
     try:
         data = request.json
-        api_key = data.get("api_key", "").strip()
-        token_address = data.get("token_address", "").strip()
+        
+        # 檢查是否為付費用戶
+        is_paid = data.get("is_paid", False)
+        payment_token = data.get("payment_token") or ""
+        if isinstance(payment_token, str):
+            payment_token = payment_token.strip()
+        
+        # 處理 API Key
+        if is_paid and payment_token:
+            # 付費用戶：驗證憑證並使用付費 API Key
+            tokens = load_payment_tokens()
+            
+            if payment_token not in tokens:
+                return jsonify({"success": False, "error": "付費憑證無效"})
+            
+            token_data = tokens[payment_token]
+            
+            # 檢查過期
+            if time.time() > token_data['expiry']:
+                return jsonify({"success": False, "error": "付費憑證已過期"})
+            
+            # 檢查次數
+            if token_data['uses_left'] <= 0:
+                return jsonify({"success": False, "error": "使用次數已用完"})
+            
+            # 扣除使用次數
+            token_data['uses_left'] -= 1
+            token_data['used_times'].append(time.time())
+            save_payment_tokens(tokens)
+            
+            # 使用付費 API Key（隨機選擇）
+            api_key = get_paid_api_key()
+            
+            print(f"💰 付費用戶使用: Token {payment_token[:8]}... 剩餘 {token_data['uses_left']} 次")
+            
+        else:
+            # 免費用戶：使用自己的 API Key
+            api_key = data.get("api_key") or ""
+            if isinstance(api_key, str):
+                api_key = api_key.strip()
+            if not api_key:
+                return jsonify({"success": False, "error": "需要 Etherscan API Key"})
+        
+        token_address = data.get("token_address") or ""
+        if isinstance(token_address, str):
+            token_address = token_address.strip()
         
         # 新增：支援時間區間
         start_minutes = int(data.get("start_minutes", 0))
@@ -844,11 +1168,14 @@ def api_analyze():
         end_minutes = int(data.get("end_minutes", 0))
         end_seconds = int(data.get("end_seconds", 0))
         
-        max_txs = int(data.get("max_txs", 100))  # 機器人閾值，預設 100
+        max_txs = int(data.get("max_txs", 100))
         
         # 計算總秒數
         start_total_seconds = (start_minutes * 60) + start_seconds
         end_total_seconds = (end_minutes * 60) + end_seconds
+        
+        # 計算查詢區間
+        query_duration = end_total_seconds - start_total_seconds
         
         # 驗證
         if end_total_seconds <= 0:
@@ -856,6 +1183,13 @@ def api_analyze():
         
         if start_total_seconds >= end_total_seconds:
             return jsonify({"success": False, "error": "起始時間必須小於結束時間"})
+        
+        # 限制最多 5 分鐘（300 秒）
+        if query_duration > 300:
+            return jsonify({
+                "success": False, 
+                "error": f"查詢區間過長！最多 5 分鐘（300 秒），您的設定為 {query_duration} 秒"
+            })
         
         if not api_key:
             return jsonify({"success": False, "error": "需要 Etherscan API Key"})
@@ -866,41 +1200,79 @@ def api_analyze():
         if max_txs < 0:
             return jsonify({"success": False, "error": "機器人閾值必須 >= 0"})
         
-        # 立即返回 session_id，在背景執行分析
-        import threading
+        # 檢查是否可以立即開始
+        if not can_start_analysis():
+            # 檢查排隊是否已滿
+            with queue_lock:
+                if len(analysis_queue_data) >= 5:
+                    return jsonify({
+                        "success": False,
+                        "error": "系統繁忙，排隊已滿，請稍後再試",
+                        "queue_full": True,
+                        "system_status": get_system_status()
+                    }), 503
+                
+                # 加入排隊
+                position = add_to_queue(session_id)
+                estimated_wait = position * 5  # 每個任務約5分鐘
+                
+                return jsonify({
+                    "success": True,
+                    "session_id": session_id,
+                    "status": "queued",
+                    "queue_position": position,
+                    "estimated_wait_minutes": estimated_wait,
+                    "message": f"排隊中...位置: {position}，預計等待: {estimated_wait} 分鐘",
+                    "system_status": get_system_status()
+                })
+        
+        # 可以立即開始，添加到活躍任務
+        add_active_task(session_id, token_address)
         
         print(f"🚀 準備啟動異步分析，Session ID: {session_id}")
         
         def run_analysis():
-            print(f"🔧 線程開始執行，Session ID: {session_id}")
             try:
-                result = analyzer.analyze_token(api_key, token_address, start_total_seconds, end_total_seconds, max_txs, session_id=session_id)
+                print(f"🔧 線程開始執行，Session ID: {session_id}")
+                result = analyzer.analyze_token(
+                    api_key, 
+                    token_address, 
+                    start_total_seconds, 
+                    end_total_seconds, 
+                    max_txs, 
+                    session_id=session_id
+                )
                 print(f"✅ 分析完成，準備標記 session")
-                # 標記會話完成，並存儲結果
                 complete_session(session_id, 'completed', result=result)
                 print(f"✅ Session 標記完成")
             except Exception as e:
                 print(f"❌ 分析錯誤: {str(e)}")
-                # 標記會話為錯誤
                 complete_session(session_id, 'error')
                 import traceback
                 traceback.print_exc()
+            finally:
+                # 移除活躍任務
+                remove_active_task(session_id)
+                # 從排隊移除（如果在隊列中）
+                remove_from_queue(session_id)
         
-        # 在新線程中執行分析
-        thread = threading.Thread(target=run_analysis)
-        thread.daemon = True
-        thread.start()
-        print(f"✅ 線程已啟動")
+        # 使用線程池提交任務
+        analysis_executor.submit(run_analysis)
+        print(f"✅ 任務已提交到線程池")
         
         # 立即返回 session_id
         return jsonify({
             "success": True,
             "session_id": session_id,
             "status": "processing",
-            "message": "分析已開始，請等待..."
+            "message": "分析已開始，請等待...",
+            "system_status": get_system_status()
         })
+        
     except Exception as e:
-        # 標記會話為錯誤
+        # 清理資源
+        remove_active_task(session_id)
+        remove_from_queue(session_id)
         complete_session(session_id, 'error')
         
         import traceback
