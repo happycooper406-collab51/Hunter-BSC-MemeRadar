@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hunter - 早鳥獵手分析平台</title>
+    
+    <!-- Ethers.js for MetaMask integration -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -850,211 +854,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* 掃描線動畫 */
-        @keyframes scan {
-            0% {
-                top: -2px;
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-            }
-            90% {
-                opacity: 1;
-            }
-            100% {
-                top: 100%;
-                opacity: 0;
-            }
-        }
-
-        .scan-line {
-            position: absolute;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, 
-                transparent, 
-                rgba(168, 85, 247, 0.8), 
-                transparent);
-            box-shadow: 0 0 20px rgba(168, 85, 247, 0.8);
-            animation: scan 8s linear infinite;
-            z-index: 1;
-        }
-
-        /* 粒子動畫 */
-        @keyframes particleFloat {
-            0%, 100% {
-                transform: translate(0, 0);
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-            }
-            90% {
-                opacity: 1;
-            }
-            100% {
-                transform: translate(var(--tx), var(--ty));
-                opacity: 0;
-            }
-        }
-
-        .particles {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            z-index: 1;
-        }
-
-        .particle {
-            position: absolute;
-            width: 3px;
-            height: 3px;
-            background: var(--primary);
-            border-radius: 50%;
-            box-shadow: 0 0 10px var(--primary);
-            animation: particleFloat linear infinite;
-        }
-
-        /* 為每個粒子設置不同的位置和動畫 */
-        .particle:nth-child(1) { left: 10%; top: 20%; --tx: 30px; --ty: -100px; animation-duration: 15s; animation-delay: 0s; }
-        .particle:nth-child(2) { left: 20%; top: 80%; --tx: -40px; --ty: -120px; animation-duration: 18s; animation-delay: 2s; }
-        .particle:nth-child(3) { left: 30%; top: 40%; --tx: 50px; --ty: -90px; animation-duration: 20s; animation-delay: 4s; }
-        .particle:nth-child(4) { left: 40%; top: 60%; --tx: -30px; --ty: -110px; animation-duration: 16s; animation-delay: 1s; }
-        .particle:nth-child(5) { left: 50%; top: 30%; --tx: 40px; --ty: -95px; animation-duration: 19s; animation-delay: 3s; }
-        .particle:nth-child(6) { left: 60%; top: 70%; --tx: -50px; --ty: -105px; animation-duration: 17s; animation-delay: 5s; }
-        .particle:nth-child(7) { left: 70%; top: 50%; --tx: 35px; --ty: -115px; animation-duration: 21s; animation-delay: 2s; }
-        .particle:nth-child(8) { left: 80%; top: 25%; --tx: -45px; --ty: -100px; animation-duration: 15s; animation-delay: 4s; }
-        .particle:nth-child(9) { left: 90%; top: 85%; --tx: 25px; --ty: -120px; animation-duration: 18s; animation-delay: 1s; }
-        .particle:nth-child(10) { left: 15%; top: 45%; --tx: -35px; --ty: -95px; animation-duration: 20s; animation-delay: 3s; }
-        .particle:nth-child(11) { left: 25%; top: 65%; --tx: 45px; --ty: -110px; animation-duration: 16s; animation-delay: 5s; }
-        .particle:nth-child(12) { left: 35%; top: 15%; --tx: -25px; --ty: -105px; animation-duration: 19s; animation-delay: 0s; }
-        .particle:nth-child(13) { left: 45%; top: 75%; --tx: 50px; --ty: -90px; animation-duration: 17s; animation-delay: 2s; }
-        .particle:nth-child(14) { left: 55%; top: 35%; --tx: -40px; --ty: -115px; animation-duration: 21s; animation-delay: 4s; }
-        .particle:nth-child(15) { left: 65%; top: 55%; --tx: 30px; --ty: -100px; animation-duration: 15s; animation-delay: 1s; }
-        .particle:nth-child(16) { left: 75%; top: 85%; --tx: -50px; --ty: -120px; animation-duration: 18s; animation-delay: 3s; }
-        .particle:nth-child(17) { left: 85%; top: 45%; --tx: 40px; --ty: -95px; animation-duration: 20s; animation-delay: 5s; }
-        .particle:nth-child(18) { left: 95%; top: 65%; --tx: -30px; --ty: -110px; animation-duration: 16s; animation-delay: 0s; }
-        .particle:nth-child(19) { left: 5%; top: 55%; --tx: 35px; --ty: -105px; animation-duration: 19s; animation-delay: 2s; }
-        .particle:nth-child(20) { left: 50%; top: 10%; --tx: -45px; --ty: -115px; animation-duration: 17s; animation-delay: 4s; }
-
-        /* 數據流動畫 */
-        @keyframes dataFlow {
-            0% {
-                transform: translateY(-100%);
-                opacity: 0;
-            }
-            10% {
-                opacity: 0.3;
-            }
-            90% {
-                opacity: 0.3;
-            }
-            100% {
-                transform: translateY(100vh);
-                opacity: 0;
-            }
-        }
-
-        .data-stream {
-            position: absolute;
-            width: 1px;
-            height: 100px;
-            background: linear-gradient(to bottom, 
-                transparent,
-                rgba(168, 85, 247, 0.4),
-                transparent);
-            animation: dataFlow linear infinite;
-            z-index: 1;
-        }
-
-        .stream-1 { left: 15%; animation-duration: 12s; animation-delay: 0s; }
-        .stream-2 { left: 40%; animation-duration: 15s; animation-delay: 3s; }
-        .stream-3 { left: 65%; animation-duration: 13s; animation-delay: 6s; }
-        .stream-4 { left: 85%; animation-duration: 14s; animation-delay: 2s; }
-
-        /* 數字跳動動畫 */
-        @keyframes countUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* 卡片淡入動畫 */
-        @keyframes cardFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .stat-card {
-            animation: cardFadeIn 0.6s ease-out forwards;
-            opacity: 0;
-        }
-
-        .stat-card:nth-child(1) { animation-delay: 0.1s; }
-        .stat-card:nth-child(2) { animation-delay: 0.2s; }
-        .stat-card:nth-child(3) { animation-delay: 0.3s; }
-        .stat-card:nth-child(4) { animation-delay: 0.4s; }
-
-        /* 表格行淡入動畫 */
-        @keyframes rowFadeIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        tbody tr {
-            animation: rowFadeIn 0.4s ease-out forwards;
-            opacity: 0;
-        }
-
-        /* 為前20行設置延遲 */
-        tbody tr:nth-child(1) { animation-delay: 0.05s; }
-        tbody tr:nth-child(2) { animation-delay: 0.1s; }
-        tbody tr:nth-child(3) { animation-delay: 0.15s; }
-        tbody tr:nth-child(4) { animation-delay: 0.2s; }
-        tbody tr:nth-child(5) { animation-delay: 0.25s; }
-        tbody tr:nth-child(6) { animation-delay: 0.3s; }
-        tbody tr:nth-child(7) { animation-delay: 0.35s; }
-        tbody tr:nth-child(8) { animation-delay: 0.4s; }
-        tbody tr:nth-child(9) { animation-delay: 0.45s; }
-        tbody tr:nth-child(10) { animation-delay: 0.5s; }
-        tbody tr:nth-child(n+11) { animation-delay: 0.5s; }
-
-        /* 強化 Glow 效果 */
-        .btn-analyze:hover {
-            box-shadow: 0 0 30px rgba(168, 85, 247, 0.6),
-                        0 0 60px rgba(168, 85, 247, 0.4);
-            transform: translateY(-2px);
-        }
-
-        .stat-card:hover {
-            box-shadow: 0 8px 30px rgba(168, 85, 247, 0.3),
-                        0 0 40px rgba(168, 85, 247, 0.2);
-        }
-
-        input:focus {
-            box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.3),
-                        0 0 20px rgba(168, 85, 247, 0.2);
-        }
-
         .loading-text {
             color: var(--text-secondary);
             font-size: 1rem;
@@ -1171,6 +970,161 @@
                 word-break: break-all;
             }
         }
+        /* ==================== 付費系統樣式 ==================== */
+        
+        /* 付費狀態顯示 */
+        .paid-status {
+            margin-bottom: 24px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(139, 92, 246, 0.1));
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .paid-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 1.1rem;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .uses-left {
+            padding: 4px 12px;
+            background: rgba(168, 85, 247, 0.2);
+            border-radius: 20px;
+            font-size: 0.95rem;
+        }
+
+        .time-left {
+            padding: 4px 12px;
+            background: rgba(139, 92, 246, 0.2);
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* 付費按鈕（緊湊版）*/
+        .pay-button-compact {
+            padding: 0 16px;
+            height: 48px;  /* 與輸入框同高 */
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            box-shadow: 0 2px 10px rgba(168, 85, 247, 0.3);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-width: 110px;
+        }
+
+        .pay-button-compact small {
+            font-size: 0.7rem;
+            opacity: 0.85;
+            font-weight: 400;
+            margin-top: 2px;
+        }
+
+        .pay-button-compact::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .pay-button-compact:hover::before {
+            left: 100%;
+        }
+
+        .pay-button-compact:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.5);
+        }
+
+        .pay-button-compact:active {
+            transform: translateY(0);
+        }
+
+        .pay-button-compact:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* API Key 輸入組（橫排布局）*/
+        .api-key-row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;  /* 底部對齊 */
+        }
+
+        .api-key-input-wrapper {
+            flex: 1;
+        }
+
+        /* 系統狀態欄 */
+        .system-status-bar {
+            margin-bottom: 20px;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(139, 92, 246, 0.05));
+            border-left: 3px solid var(--primary);
+            border-radius: 8px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .system-status-bar.warning {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.05));
+            border-left-color: var(--warning);
+        }
+
+        .system-status-bar.busy {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
+            border-left-color: var(--danger);
+        }
+
+        .status-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .status-icon {
+            font-size: 1.2rem;
+        }
+
+        #statusText {
+            font-weight: 500;
+        }
+
+        /* 付費功能提示 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 <body>
@@ -1179,39 +1133,6 @@
         <div class="grid-pattern"></div>
         <div class="glow-orb orb-1"></div>
         <div class="glow-orb orb-2"></div>
-        
-        <!-- 掃描線 -->
-        <div class="scan-line"></div>
-        
-        <!-- 粒子系統 -->
-        <div class="particles">
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-        </div>
-        
-        <!-- 數據流 -->
-        <div class="data-stream stream-1"></div>
-        <div class="data-stream stream-2"></div>
-        <div class="data-stream stream-3"></div>
-        <div class="data-stream stream-4"></div>
     </div>
 
     <!-- Hero Page -->
@@ -1225,7 +1146,7 @@
                     <button class="donate-badge" onclick="copyDonateAddress()" data-i18n="donate">💝 打賞</button>
                     <button class="help-btn" onclick="toggleHelp()">ℹ️ <span id="helpText">說明</span></button>
                     <button class="lang-toggle" onclick="toggleLanguage()">🌐 <span id="langText">EN</span></button>
-                    <span class="version-badge">v2.2.0</span>
+                    <span class="version-badge">v2.1.1</span>
                 </div>
             </div>
 
@@ -1243,15 +1164,31 @@
 
                     <!-- 輸入表單 -->
                     <div class="input-section">
-                        <div class="form-group">
-                            <label class="form-label tooltip-wrapper">
-                                <span id="labelApiKey">Etherscan API Key</span> <span class="required">*</span>
-                                <span class="tooltip-icon">
-                                    ?
-                                    <span class="tooltip-text" id="tooltipApiKey">從 Etherscan 取得免費 API Key</span>
-                                </span>
-                            </label>
-                            <input type="password" id="apiKey" placeholder="輸入你的 Etherscan API Key" />
+                        <!-- 系統狀態顯示 -->
+                        <div id="systemStatusBar" class="system-status-bar" style="display: none;">
+                            <div class="status-content">
+                                <span class="status-icon">👥</span>
+                                <span id="statusText">目前使用人數：0</span>
+                            </div>
+                        </div>
+                        
+                        <!-- API Key 和付費按鈕（橫排）-->
+                        <div class="api-key-row">
+                            <div class="api-key-input-wrapper form-group">
+                                <label class="form-label tooltip-wrapper">
+                                    <span id="labelApiKey">Etherscan V2 API Key</span> <span class="required">*</span>
+                                    <span class="tooltip-icon">
+                                        ?
+                                        <span class="tooltip-text" id="tooltipApiKey">Etherscan已全面更新為付費 V2 API，免費版無法使用</span>
+                                    </span>
+                                </label>
+                                <input type="password" id="apiKey" placeholder="輸入你的 Etherscan V2 API Key" />
+                            </div>
+                            
+                            <button type="button" id="payButton" class="pay-button-compact" onclick="payForService()">
+                                💰 付費 API
+                                <small>0.01 BNB</small>
+                            </button>
                         </div>
 
                         <div class="form-group">
@@ -1264,7 +1201,7 @@
                         <div class="time-inputs">
                             <div class="form-group">
                                 <label class="form-label tooltip-wrapper">
-                                    <span id="labelStartTime">起始時間（開盤後）</span>
+                                    <span id="labelStartTime">起始時間</span>
                                     <span class="tooltip-icon">
                                         ?
                                         <span class="tooltip-text" id="tooltipStartTime">從開盤後多久開始抓取<br>例：15分鐘 = 從開盤後15分鐘開始</span>
@@ -1485,6 +1422,325 @@
     </div>
 
     <script>
+        // ==================== 付費系統 ====================
+        
+        const PAYMENT_CONFIG = {
+            receiver: '0xe0b7e35556731872B3CE18c9645D69290F428C1C',
+            amount: '0.005',  // BNB
+            chainId: '0x38'  // BSC Mainnet
+        };
+
+        let paymentToken = null;
+        let tokenExpiry = null;
+        let usesLeft = null;
+
+        // 頁面加載時檢查付費狀態
+        window.addEventListener('load', () => {
+            checkPaymentStatus();
+        });
+
+        function checkPaymentStatus() {
+            const savedToken = localStorage.getItem('payment_token');
+            const savedExpiry = localStorage.getItem('token_expiry');
+            
+            if (savedToken && savedExpiry) {
+                const expiry = parseInt(savedExpiry);
+                if (Date.now() / 1000 < expiry) {
+                    // 向後端驗證
+                    fetch('/api/check-payment-token', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({token: savedToken})
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.valid) {
+                            paymentToken = savedToken;
+                            usesLeft = data.uses_left;
+                            tokenExpiry = expiry;
+                            showPaidUserUI(data.uses_left, data.time_left_minutes);
+                        } else {
+                            clearPaymentData();
+                        }
+                    })
+                    .catch(() => clearPaymentData());
+                } else {
+                    clearPaymentData();
+                }
+            }
+        }
+
+        function clearPaymentData() {
+            localStorage.removeItem('payment_token');
+            localStorage.removeItem('token_expiry');
+            localStorage.removeItem('uses_left');
+            paymentToken = null;
+            usesLeft = null;
+            tokenExpiry = null;
+            showFreeUserUI();
+        }
+
+        function showPaidUserUI(uses, minutes) {
+            // 隱藏整個 API Key 行（包含按鈕）
+            const apiKeyRow = document.querySelector('.api-key-row');
+            if (apiKeyRow) apiKeyRow.style.display = 'none';
+            
+            // 創建或更新付費狀態顯示
+            let statusDiv = document.getElementById('paidStatus');
+            if (!statusDiv) {
+                statusDiv = document.createElement('div');
+                statusDiv.id = 'paidStatus';
+                statusDiv.className = 'paid-status';
+                
+                const inputSection = document.querySelector('.input-section');
+                if (inputSection && inputSection.firstChild) {
+                    inputSection.insertBefore(statusDiv, inputSection.firstChild);
+                }
+            }
+            
+            statusDiv.innerHTML = `
+                <div class="paid-badge">
+                    ✨ 付費用戶
+                    <span class="uses-left">${uses} 次剩餘</span>
+                    <span class="time-left">${minutes}:00</span>
+                </div>
+            `;
+            statusDiv.style.display = 'block';
+            
+            // 啟動倒計時
+            startCountdown();
+        }
+
+        function showFreeUserUI() {
+            const apiKeyRow = document.querySelector('.api-key-row');
+            const statusDiv = document.getElementById('paidStatus');
+            
+            if (apiKeyRow) apiKeyRow.style.display = 'flex';
+            if (statusDiv) statusDiv.style.display = 'none';
+        }
+
+        let countdownInterval = null;
+
+        function startCountdown() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            
+            countdownInterval = setInterval(() => {
+                if (!tokenExpiry) {
+                    clearInterval(countdownInterval);
+                    return;
+                }
+                
+                const now = Date.now() / 1000;
+                const left = Math.max(0, tokenExpiry - now);
+                
+                if (left <= 0) {
+                    clearInterval(countdownInterval);
+                    clearPaymentData();
+                    alert('付費憑證已過期');
+                    return;
+                }
+                
+                const minutes = Math.floor(left / 60);
+                const seconds = Math.floor(left % 60);
+                
+                const timeSpan = document.querySelector('.time-left');
+                if (timeSpan) {
+                    timeSpan.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }, 1000);
+        }
+
+        async function connectWallet() {
+            if (typeof window.ethereum === 'undefined') {
+                alert('請安裝 MetaMask 錢包！\n\n請前往 https://metamask.io 下載');
+                return null;
+            }
+            
+            try {
+                const accounts = await window.ethereum.request({
+                    method: 'eth_requestAccounts'
+                });
+                
+                try {
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{chainId: PAYMENT_CONFIG.chainId}]
+                    });
+                } catch (switchError) {
+                    if (switchError.code === 4902) {
+                        await window.ethereum.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                                chainId: PAYMENT_CONFIG.chainId,
+                                chainName: 'Binance Smart Chain',
+                                nativeCurrency: {
+                                    name: 'BNB',
+                                    symbol: 'BNB',
+                                    decimals: 18
+                                },
+                                rpcUrls: ['https://bsc-dataseed.binance.org/'],
+                                blockExplorerUrls: ['https://bscscan.com/']
+                            }]
+                        });
+                    } else {
+                        throw switchError;
+                    }
+                }
+                
+                return accounts[0];
+            } catch (error) {
+                console.error('連接錢包失敗:', error);
+                alert('連接錢包失敗: ' + error.message);
+                return null;
+            }
+        }
+
+        async function payForService() {
+            const payButton = document.getElementById('payButton');
+            const originalText = payButton.innerHTML;
+            
+            try {
+                payButton.innerHTML = '<span>🔄 連接錢包...</span>';
+                payButton.disabled = true;
+                
+                const account = await connectWallet();
+                if (!account) {
+                    return;
+                }
+                
+                payButton.innerHTML = '<span>🔄 請在 MetaMask 確認支付...</span>';
+                
+                const transactionParameters = {
+                    from: account,
+                    to: PAYMENT_CONFIG.receiver,
+                    value: '0x' + (parseFloat(PAYMENT_CONFIG.amount) * 1e18).toString(16),
+                    chainId: PAYMENT_CONFIG.chainId
+                };
+                
+                const txHash = await window.ethereum.request({
+                    method: 'eth_sendTransaction',
+                    params: [transactionParameters]
+                });
+                
+                console.log('交易已發送:', txHash);
+                
+                payButton.innerHTML = '<span>⏳ 等待交易確認（約 3-5 秒）...</span>';
+                
+                let confirmed = false;
+                let attempts = 0;
+                const maxAttempts = 60;
+                
+                while (!confirmed && attempts < maxAttempts) {
+                    try {
+                        const receipt = await window.ethereum.request({
+                            method: 'eth_getTransactionReceipt',
+                            params: [txHash]
+                        });
+                        
+                        if (receipt && receipt.status === '0x1') {
+                            confirmed = true;
+                            break;
+                        }
+                    } catch (e) {
+                        // 繼續等待
+                    }
+                    
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    attempts++;
+                }
+                
+                if (!confirmed) {
+                    throw new Error('交易確認超時，請稍後手動驗證');
+                }
+                
+                payButton.innerHTML = '<span>🔄 驗證支付...</span>';
+                
+                const response = await fetch('/api/verify-payment', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({tx_hash: txHash})
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    paymentToken = data.token;
+                    tokenExpiry = Date.now() / 1000 + data.expiry_seconds;
+                    usesLeft = data.uses_left;
+                    
+                    localStorage.setItem('payment_token', paymentToken);
+                    localStorage.setItem('token_expiry', tokenExpiry.toString());
+                    localStorage.setItem('uses_left', usesLeft.toString());
+                    
+                    alert(`✅ 支付成功！\n\n您已獲得 ${data.uses_left} 次使用權限\n有效期：${Math.floor(data.expiry_seconds / 60)} 分鐘`);
+                    
+                    showPaidUserUI(data.uses_left, Math.floor(data.expiry_seconds / 60));
+                } else {
+                    throw new Error(data.error || '驗證失敗');
+                }
+                
+            } catch (error) {
+                console.error('支付失敗:', error);
+                alert('支付失敗: ' + error.message);
+            } finally {
+                payButton.innerHTML = originalText;
+                payButton.disabled = false;
+            }
+        }
+
+        // ==================== 系統狀態顯示 ====================
+        
+        function updateSystemStatus() {
+            fetch('/api/system-status')
+                .then(r => r.json())
+                .then(data => {
+                    const statusBar = document.getElementById('systemStatusBar');
+                    const statusText = document.getElementById('statusText');
+                    
+                    if (!statusBar || !statusText) return;
+                    
+                    const totalUsers = data.total_users || 0;
+                    const activeCount = data.active_count || 0;
+                    const queueCount = data.queue_count || 0;
+                    
+                    // 移除所有狀態類
+                    statusBar.classList.remove('warning', 'busy');
+                    
+                    if (totalUsers === 0) {
+                        // 無人使用，隱藏狀態欄
+                        statusBar.style.display = 'none';
+                    } else {
+                        // 有人使用，顯示狀態欄
+                        statusBar.style.display = 'block';
+                        
+                        if (data.is_busy && queueCount > 0) {
+                            // 繁忙且有排隊
+                            statusBar.classList.add('busy');
+                            statusText.innerHTML = `⚠️ 目前使用人數：<strong>${totalUsers}</strong> 人（${activeCount} 處理中 + ${queueCount} 排隊中）`;
+                        } else if (data.is_busy) {
+                            // 繁忙但無排隊
+                            statusBar.classList.add('warning');
+                            statusText.innerHTML = `🔥 目前使用人數：<strong>${totalUsers}</strong> 人（滿載運行中）`;
+                        } else {
+                            // 正常運行
+                            statusText.innerHTML = `👥 目前使用人數：<strong>${totalUsers}</strong> 人`;
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error('無法獲取系統狀態:', err);
+                });
+        }
+        
+        // 頁面載入時更新一次
+        updateSystemStatus();
+        
+        // 每 5 秒更新一次系統狀態
+        setInterval(updateSystemStatus, 5000);
+
+        // ==================== 原有功能 ====================
         function startAnalysis() {
             const apiKey = document.getElementById('apiKey').value;
             const address = document.getElementById('tokenAddress').value;
@@ -1494,8 +1750,17 @@
             const endSeconds = parseInt(document.getElementById('endSeconds').value) || 0;
             const maxTxs = parseInt(document.getElementById('maxTxs').value) || 10;
 
-            if (!apiKey || !address) {
-                alert('請填寫 API Key 和代幣地址');
+            // 檢查是否為付費用戶
+            const isPaid = !!paymentToken;
+            
+            // 驗證輸入
+            if (!isPaid && !apiKey) {
+                alert('請填寫 API Key 或使用付費服務');
+                return;
+            }
+            
+            if (!address) {
+                alert('請填寫代幣地址');
                 return;
             }
 
@@ -1508,11 +1773,20 @@
                 return;
             }
 
+            // 檢查查詢區間是否超過 5 分鐘
+            const queryDuration = endTime - startTime;
+            if (queryDuration > 300) {
+                alert(`❌ 查詢區間過長！\n\n最多 5 分鐘（300 秒）\n您的設定為 ${queryDuration} 秒（${Math.floor(queryDuration/60)} 分 ${queryDuration%60} 秒）\n\n請縮短查詢區間以避免系統塞車`);
+                return;
+            }
+
             console.log('🚀 開始分析:', {
                 tokenAddress: address,
                 startTime,
                 endTime,
-                maxTxs
+                queryDuration,
+                maxTxs,
+                isPaid: isPaid
             });
 
             // 顯示 loading
@@ -1526,7 +1800,9 @@
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    api_key: apiKey,
+                    is_paid: isPaid,
+                    payment_token: isPaid ? paymentToken : null,
+                    api_key: isPaid ? null : apiKey,
                     token_address: address,
                     start_minutes: startMinutes,
                     start_seconds: startSeconds,
@@ -1544,6 +1820,21 @@
                     alert('分析失敗: ' + (data.error || '未知錯誤'));
                     document.getElementById('loading').classList.remove('active');
                     return;
+                }
+
+                // 如果是付費用戶，更新剩餘次數
+                if (isPaid && usesLeft !== null) {
+                    usesLeft--;
+                    localStorage.setItem('uses_left', usesLeft.toString());
+                    
+                    const usesSpan = document.querySelector('.uses-left');
+                    if (usesSpan) {
+                        usesSpan.textContent = `${usesLeft} 次剩餘`;
+                    }
+                    
+                    if (usesLeft <= 0) {
+                        alert('✅ 分析已開始！\n⚠️ 這是您最後一次使用付費服務');
+                    }
                 }
 
                 // 收到 session_id，開始輪詢進度
@@ -1703,9 +1994,7 @@
 
             // 填充統計數據
             document.getElementById('tokenInfo').textContent = `Token: ${tokenAddress.substring(0, 10)}...`;
-            
-            // 使用數字跳動動畫
-            animateNumber('totalTx', 0, result.buyers.length || 0, 1000);
+            document.getElementById('totalTx').textContent = result.buyers.length || '0';
             
             // Token 名稱顯示
             if (result.token_info) {
@@ -1727,54 +2016,17 @@
                     maxProfit = Math.max(...profits);
                 }
             }
-            // 使用數字跳動動畫（倍數）
-            animateNumber('maxProfit', 0, maxProfit, 1000, (val) => `×${val.toFixed(1)}`);
+            document.getElementById('maxProfit').textContent = `×${maxProfit.toFixed(1)}`;
             
             // 機器人數量 - 使用正確的欄位名稱
             const robotCount = result.buyers.filter(b => b.is_bot).length;
-            animateNumber('robots', 0, robotCount, 1000);
+            document.getElementById('robots').textContent = robotCount;
             
             // 時間區間
             document.getElementById('timeRange').textContent = `${startTime}-${endTime}s`;
 
             // 填充表格
             displayResults(result);
-        }
-
-        // 數字跳動動畫函數
-        function animateNumber(elementId, start, end, duration, formatter = null) {
-            const element = document.getElementById(elementId);
-            if (!element) return;
-            
-            const startTime = performance.now();
-            const difference = end - start;
-            
-            function updateNumber(currentTime) {
-                const elapsed = currentTime - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                
-                // 使用 easeOutCubic 緩動函數
-                const easeProgress = 1 - Math.pow(1 - progress, 3);
-                const current = start + (difference * easeProgress);
-                
-                if (formatter) {
-                    element.textContent = formatter(current);
-                } else {
-                    element.textContent = Math.floor(current);
-                }
-                
-                if (progress < 1) {
-                    requestAnimationFrame(updateNumber);
-                } else {
-                    if (formatter) {
-                        element.textContent = formatter(end);
-                    } else {
-                        element.textContent = end;
-                    }
-                }
-            }
-            
-            requestAnimationFrame(updateNumber);
         }
 
         function startFakeProgress() {
@@ -1890,19 +2142,19 @@
                     // 首頁
                     heroTitle: '發現<span class="gradient-text">早鳥獵手</span><br>找出真正的獲利贏家',
                     heroSubtitle: '分析區塊鏈數據中的早期買家行為，<br>識別獲利機會並偵測機器人模式。',
-                    labelApiKey: 'Etherscan API Key',
+                    labelApiKey: 'Etherscan V2 API Key',
                     labelTokenAddress: '代幣合約地址',
                     labelStartTime: '起始時間（開盤後）',
                     labelEndTime: '結束時間（開盤後）',
                     labelBotThreshold: '機器人閾值',
-                    tooltipApiKey: '從 Etherscan 取得免費 API Key',
+                    tooltipApiKey: 'Etherscan 已改為付費 V2 API，免費版無法使用',
                     tooltipStartTime: '從開盤後多久開始抓取<br>例：15分鐘 = 從開盤後15分鐘開始',
                     tooltipEndTime: '到開盤後多久結束抓取<br>例：30分鐘 = 到開盤後30分鐘為止',
                     tooltipBotThreshold: '篩選高頻交易帳號<br>交易筆數 > 此值 = 機器人<br>建議：10（嚴格）~ 100（寬鬆）',
                     unitMinutes: '分鐘',
                     unitSeconds: '秒',
                     btnAnalyze: '🚀 開始分析',
-                    placeholderApiKey: '輸入你的 Etherscan API Key',
+                    placeholderApiKey: '輸入你的 Etherscan V2 API Key',
                     
                     // 結果頁
                     rank: '#',
@@ -1944,19 +2196,19 @@
                     // 首頁
                     heroTitle: 'Discover <span class="gradient-text">Early Birds</span><br>Find Real Winners',
                     heroSubtitle: 'Analyze early buyer behavior through blockchain data<br>to identify profit opportunities and detect bot patterns.',
-                    labelApiKey: 'Etherscan API Key',
+                    labelApiKey: 'Etherscan V2 API Key',
                     labelTokenAddress: 'Token Contract Address',
                     labelStartTime: 'Start Time (After Launch)',
                     labelEndTime: 'End Time (After Launch)',
                     labelBotThreshold: 'Bot Threshold',
-                    tooltipApiKey: 'Get free API Key from Etherscan',
+                    tooltipApiKey: 'Etherscan now requires paid V2 API, free version unavailable',
                     tooltipStartTime: 'Start tracking after launch<br>e.g., 15 minutes = 15 min after launch',
                     tooltipEndTime: 'Stop tracking after launch<br>e.g., 30 minutes = 30 min after launch',
                     tooltipBotThreshold: 'Filter high-frequency accounts<br>Txs > value = Bot<br>Recommend: 10 (strict) ~ 100 (loose)',
                     unitMinutes: 'min',
                     unitSeconds: 'sec',
                     btnAnalyze: '🚀 Start Analysis',
-                    placeholderApiKey: 'Enter your Etherscan API Key',
+                    placeholderApiKey: 'Enter your Etherscan V2 API Key',
                     
                     // 結果頁
                     rank: '#',
